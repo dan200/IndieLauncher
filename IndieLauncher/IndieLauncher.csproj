@@ -69,5 +69,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Ionic.Zip.dll" />
     <EmbeddedResource Include="EmbeddedGame.txt" />
+    <EmbeddedResource Include="EmbeddedGame.zip" />
   </ItemGroup>
 </Project>
