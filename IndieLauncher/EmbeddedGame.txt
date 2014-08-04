@@ -1,0 +1,4 @@
+﻿// Details of the embedded game to first install when running this launcher
+game=ExampleGame
+version=1.0
+url=https://raw.githubusercontent.com/dan200/IndieLauncher/master/ExampleGame/ExampleGame.xml
