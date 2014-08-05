@@ -3,12 +3,37 @@ using System.Xml;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 
 namespace Dan200.Launcher.RSS
 {
 	public class RSSFile
 	{
         public readonly IList<RSSChannel> Channels;
+
+        public static RSSFile Download( string url )
+        {
+            try
+            {
+                var request = HttpWebRequest.Create( url );
+                request.Timeout = 15000;
+                using( var response = request.GetResponse() )
+                {
+                    using( var stream = response.GetResponseStream() )
+                    {
+                        return new RSSFile( stream );
+                    }
+                }
+            }
+            catch( IOException )
+            {
+                return null;
+            }
+            catch( WebException )
+            {
+                return null;
+            }
+        }
 
         public RSSFile()
         {

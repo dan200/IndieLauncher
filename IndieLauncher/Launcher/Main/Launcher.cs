@@ -4,25 +4,26 @@ using System.Diagnostics;
 
 namespace Dan200.Launcher.Main
 {
-    public class Launcher
+    public static class Launcher
     {
-        public static bool LaunchGame( string path, string gameTitle )
+        public static bool LaunchGame( string gameTitle, string gameVersion )
         {
-            if( Directory.Exists( path ) )
+            if( Installer.IsGameInstalled( gameTitle, gameVersion ) )
             {
-                // Search for a platform suitable exe to run
+                // Search for a suitable exe to run
+                string gamePath = Installer.GetInstallPath( gameTitle, gameVersion );
                 string launchPath = null;
                 switch( Program.Platform )
                 {
                     case Platform.Windows:
                     {
-                        string exePath = Path.Combine( path, gameTitle + ".exe" );
+                        string exePath = Path.Combine( gamePath, gameTitle + ".exe" );
                         if( File.Exists( exePath ) )
                         {
                             launchPath = exePath;
                             break;
                         }
-                        string batPath = Path.Combine( path, gameTitle + ".bat" );
+                        string batPath = Path.Combine( gamePath, gameTitle + ".bat" );
                         if( File.Exists( batPath ) )
                         {
                             launchPath = batPath;
@@ -32,13 +33,13 @@ namespace Dan200.Launcher.Main
                     }
                     case Platform.OSX:
                     {
-                        string appPath = Path.Combine( path, gameTitle + ".app" );
+                        string appPath = Path.Combine( gamePath, gameTitle + ".app" );
                         if( Directory.Exists( appPath ) )
                         {
                             launchPath = appPath;
                             break;
                         }
-                        string shPath = Path.Combine( path, gameTitle + ".sh" );
+                        string shPath = Path.Combine( gamePath, gameTitle + ".sh" );
                         if( File.Exists( shPath ) )
                         {
                             launchPath = shPath;
@@ -49,7 +50,7 @@ namespace Dan200.Launcher.Main
                     case Platform.Linux:
                     default:
                     {
-                        string shPath = Path.Combine( path, gameTitle + ".sh" );
+                        string shPath = Path.Combine( gamePath, gameTitle + ".sh" );
                         if( File.Exists( shPath ) )
                         {
                             launchPath = shPath;
@@ -61,27 +62,27 @@ namespace Dan200.Launcher.Main
 
                 if( launchPath != null )
                 {
-                    // Run the platform exe
+                    // Run the exe
                     if( Path.GetExtension( launchPath ) == ".sh" )
                     {
                         var startInfo = new ProcessStartInfo();
                         startInfo.FileName = "/bin/sh";
+                        startInfo.WorkingDirectory = gamePath;
                         startInfo.Arguments = Path.GetFileName( launchPath );
-                        startInfo.WorkingDirectory = path;
                         Process.Start( startInfo );
                     }
                     else
                     {
                         var startInfo = new ProcessStartInfo();
                         startInfo.FileName = launchPath;
-                        startInfo.WorkingDirectory = path;
+                        startInfo.WorkingDirectory = gamePath;
                         Process.Start( startInfo );
                     }
                 }
                 else
                 {
-                    // Just open the folder
-                    Process.Start( path );
+                    // If no exe was found, just open the folder
+                    Process.Start( gamePath );
                 }
                 return true;
             }

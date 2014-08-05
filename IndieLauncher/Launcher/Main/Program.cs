@@ -13,7 +13,7 @@ namespace Dan200.Launcher.Main
 	public class Program
 	{
         [DllImport( "libc" )]
-        static extern int uname( IntPtr buf );
+        private static extern int uname( IntPtr buf );
 
         public static Platform Platform
         {
@@ -80,134 +80,17 @@ namespace Dan200.Launcher.Main
                 }
             }
         }
-
-        private static string GetBaseStorageDirectory()
+                        
+        private static void SetupEmbeddedAssemblies()
         {
-            if( Platform == Platform.OSX )
+            EmbeddedAssembly.Load( "Ionic.Zip.dll" );
+            AppDomain.CurrentDomain.AssemblyResolve += delegate(object sender, ResolveEventArgs args )
             {
-                return Path.Combine(
-                    Environment.GetFolderPath( Environment.SpecialFolder.Personal ),
-                    "Library/Application Support"
-                );
-            }
-            else
-            {
-                return Environment.GetFolderPath( Environment.SpecialFolder.ApplicationData );
-            }
+                return EmbeddedAssembly.Get( args.Name );
+            };
         }
 
-        private static string GetStorageDirectory()
-        {
-            return Path.Combine( GetBaseStorageDirectory(), "IndieLauncher" );
-        }
-
-        private static RSSFile DownloadRSS( string url )
-        {
-            try
-            {
-                var request = HttpWebRequest.Create( url );
-                request.Timeout = 15000;
-                using( var response = request.GetResponse() )
-                {
-                    using( var stream = response.GetResponseStream() )
-                    {
-                        return new RSSFile( stream );
-                    }
-                }
-            }
-            catch( IOException )
-            {
-                return null;
-            }
-            catch( WebException )
-            {
-                return null;
-            }
-        }
-
-        private static bool DownloadFile( string url, string path )
-        {
-            try
-            {
-                var request = HttpWebRequest.Create( url );
-                request.Timeout = 15000;
-                using( var response = request.GetResponse() )
-                {
-                    using( var stream = response.GetResponseStream() )
-                    {
-                        Directory.CreateDirectory( Path.GetDirectoryName( path ) );
-                        using( var output = File.OpenWrite( path ) )
-                        {
-                            stream.CopyTo( output );
-                            output.Close();
-                        }
-                        stream.Close();
-                    }
-                }
-                return true;
-            }
-            catch( IOException )
-            {
-                File.Delete( path );
-                return false;
-            }
-            catch( WebException )
-            {
-                File.Delete( path );
-                return false;
-            }
-        }
-
-        private static bool InstallFile( string downloadPath, string installPath )
-        {
-            try
-            {
-                using( var zipFile = new ZipFile( downloadPath ) )
-                {
-                    Directory.CreateDirectory( installPath );
-                    foreach( var entry in zipFile.Entries )
-                    {
-                        var entryInstallPath = Path.Combine( installPath, entry.FileName );
-                        if( entry.IsDirectory )
-                        {
-                            Directory.CreateDirectory( entryInstallPath );
-                        }
-                        else
-                        {
-                            Directory.CreateDirectory( Path.GetDirectoryName( entryInstallPath ) );
-                            using( var file = File.OpenWrite( entryInstallPath ) )
-                            {
-                                using( var reader = entry.OpenReader() )
-                                {
-                                    reader.CopyTo( file );
-                                    reader.Close();
-                                }
-                                file.Close();
-                            }
-                        }
-                    }
-                }
-                return true;
-            }
-            catch( IOException )
-            {
-                if( Directory.Exists( installPath ) )
-                {
-                    Directory.Delete( installPath, true );
-                }
-                return false;
-            }
-            catch( ZipException )
-            {
-                if( Directory.Exists( installPath ) )
-                {
-                    Directory.Delete( installPath, true );
-                }
-                return false;
-            }
-        }
-
-        private static RSSEntry GetMatchingEntry( RSSFile file, ref string io_game, ref string io_version, ref bool o_isLatest )
+        private static string GetDownloadURL( RSSFile file, ref string io_game, ref string io_version, out bool o_isLatest )
         {
             if( file != null )
             {
@@ -227,7 +110,7 @@ namespace Dan200.Launcher.Main
                                     {
                                         io_version = entry.Title;
                                         o_isLatest = (i == 0);
-                                        return entry;
+                                        return entry.Link;
                                     }
                                 }
                             }
@@ -236,26 +119,20 @@ namespace Dan200.Launcher.Main
                     }
                 }
             }
+            o_isLatest = default( bool );
             return null;
         }
 
-        private static bool DownloadAndInstall( string downloadURL, string gameTitle, string gameVersion, bool isLatest )
+        private static bool Download( string gameTitle, string gameVersion, string downloadURL )
         {
-            // Build the path
-            string gamePath = GetStorageDirectory();
-            gamePath = Path.Combine( gamePath, "Games" );
-            gamePath = Path.Combine( gamePath, gameTitle );
-
             // Download
-            string downloadPath = gamePath;
-            downloadPath = Path.Combine( downloadPath, "Downloads" );
-            downloadPath = Path.Combine( downloadPath, gameVersion + ".zip" );
-            if( !File.Exists( downloadPath ) )
+            if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
             {
                 Console.Write( "Downloading update... " );
-                if( DownloadFile( downloadURL, downloadPath ) )
+                if( Installer.DownloadGame( gameTitle, gameVersion, downloadURL ) )
                 {
                     Console.WriteLine( "OK." );
+                    return true;
                 }
                 else
                 {
@@ -266,18 +143,20 @@ namespace Dan200.Launcher.Main
             else
             {
                 Console.WriteLine( "Update already downloaded." );
+                return true;
             }
+        }
 
+        private static bool Install( string gameTitle, string gameVersion )
+        {
             // Install
-            string installPath = gamePath;
-            installPath = Path.Combine( installPath, "Versions" );
-            installPath = Path.Combine( installPath, gameVersion );
-            if( !Directory.Exists( installPath ) )
+            if( !Installer.IsGameInstalled( gameTitle, gameVersion ) )
             {
                 Console.Write( "Installing update... " );
-                if( InstallFile( downloadPath, installPath ) )
+                if( Installer.InstallGame( gameTitle, gameVersion ) )
                 {
                     Console.WriteLine( "OK." );
+                    return true;
                 }
                 else
                 {
@@ -288,84 +167,27 @@ namespace Dan200.Launcher.Main
             else
             {
                 Console.WriteLine( "Update already installed." );
+                return true;
             }
+        }
 
+        private static void Record( string gameTitle, string gameVersion, bool overwrite )
+        {
             // Record that this file is the latest
-            if( isLatest || !File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+            var gamePath = Installer.GetBasePath( gameTitle );
+            if( overwrite || !File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
             {
                 File.WriteAllText( Path.Combine( gamePath, "LatestVersion.txt" ), gameVersion );
             }
-            return true;
         }
 
-        private static Stream OpenEmbeddedResource( string name )
+        private static bool ExtractEmbedded( string gameTitle, string gameVersion )
         {
-            var assembly = Assembly.GetAssembly( typeof(Program) );
-            return assembly.GetManifestResourceStream( name );
-        }
-
-        private static bool GetEmbeddedGameData( ref string o_gameURL, ref string o_gameTitle, ref string o_gameVersion )
-        {
-            using( var stream = OpenEmbeddedResource( "EmbeddedGame.txt" ) )
-            {
-                if( stream != null )
-                {
-                    var kvp = new KeyValuePairs();
-                    kvp.Load( stream );
-                    if( kvp.ContainsKey( "game" ) )
-                    {
-                        o_gameTitle = kvp.GetString( "game" );
-                        o_gameVersion = kvp.GetString( "version" );
-                        o_gameURL = kvp.GetString( "url" );
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private static bool ExtractEmbeddedGame( string path )
-        {
-            try
-            {
-                using( var stream = OpenEmbeddedResource( "EmbeddedGame.zip" ) )
-                {
-                    if( stream != null )
-                    {
-                        Directory.CreateDirectory( Path.GetDirectoryName( path ) );
-                        using( var output = File.OpenWrite( path ) )
-                        {
-                            stream.CopyTo( output );
-                            output.Close();
-                        }
-                        stream.Close();
-                        return true;
-                    }
-                }
-                return false;
-            }
-            catch( IOException )
-            {
-                File.Delete( path );
-                return false;
-            }
-        }
-
-        private static bool ExtractAndInstallEmbeddedGame( string gameTitle, string gameVersion )
-        {
-            // Build the path
-            string gamePath = GetStorageDirectory();
-            gamePath = Path.Combine( gamePath, "Games" );
-            gamePath = Path.Combine( gamePath, gameTitle );
-
             // Extract the embedded game
-            string downloadPath = gamePath;
-            downloadPath = Path.Combine( downloadPath, "Downloads" );
-            downloadPath = Path.Combine( downloadPath, gameVersion + ".zip" );
-            if( !File.Exists( downloadPath ) )
+            if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
             {                   
                 Console.Write( "Extracting embedded game... " );
-                if( ExtractEmbeddedGame( downloadPath ) )
+                if( Installer.ExtractEmbeddedGame() )
                 {
                     Console.WriteLine( "OK." );
                 }
@@ -374,41 +196,27 @@ namespace Dan200.Launcher.Main
                     Console.WriteLine( "Failed." );
                     return false;
                 }
-            }
-
-            // Install the embedded game
-            string installPath = gamePath;
-            installPath = Path.Combine( installPath, "Versions" );
-            installPath = Path.Combine( installPath, gameVersion );
-            if( !Directory.Exists( installPath ) )
-            {
-                Console.Write( "Installing embedded game... " );
-                if( InstallFile( downloadPath, installPath ) )
-                {
-                    Console.WriteLine( "OK." );
-                }
-                else
-                {
-                    Console.WriteLine( "Failed." );
-                    return false;
-                }
-            }
-
-            // Record that this file is the latest
-            if( !File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
-            {
-                File.WriteAllText( Path.Combine( gamePath, "LatestVersion.txt" ), gameVersion );
             }
             return true;
         }
 
-        private static void SetupEmbeddedAssemblies()
+        private static bool InstallEmbedded( string gameTitle, string gameVersion )
         {
-            EmbeddedAssembly.Load( "Ionic.Zip.dll" );
-            AppDomain.CurrentDomain.AssemblyResolve += delegate(object sender, ResolveEventArgs args )
+            // Install the embedded game
+            if( !Installer.IsGameInstalled( gameTitle, gameVersion ) )
             {
-                return EmbeddedAssembly.Get( args.Name );
-            };
+                Console.Write( "Installing embedded game... " );
+                if( Installer.InstallGame( gameTitle, gameVersion ) )
+                {
+                    Console.WriteLine( "OK." );
+                }
+                else
+                {
+                    Console.WriteLine( "Failed." );
+                    return false;
+                }
+            }
+            return true;
         }
 
 		public static void Main( string[] args )
@@ -418,33 +226,47 @@ namespace Dan200.Launcher.Main
             Platform = DeterminePlatform();
             Arguments = new ProgramArguments( args );
 
-            // Get the search params
-            string gameURL = Arguments.GetString( "url" );
-            string gameTitle = Arguments.GetString( "game" );
-            string gameVersion = Arguments.GetString( "version" );
-            string embeddedGameVersion = null;
-            if( GetEmbeddedGameData( ref gameURL, ref gameTitle, ref embeddedGameVersion ) && embeddedGameVersion != null )
+            // Install the embedded game
+            string gameTitle, gameVersion, gameURL;
+            string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
+            if( Installer.GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
             {
-                ExtractAndInstallEmbeddedGame( gameTitle, embeddedGameVersion );
+                if( embeddedGameVersion != null &&
+                    ExtractEmbedded( embeddedGameTitle, embeddedGameVersion ) &&
+                    InstallEmbedded( embeddedGameTitle, embeddedGameVersion ) )
+                {
+                    Record( embeddedGameTitle, embeddedGameVersion, false );
+                }
+
+                gameTitle = embeddedGameTitle;
+                gameVersion = Arguments.GetString( "version" );
+                gameURL = embeddedGameURL;
+            }
+            else
+            {
+                gameTitle = Arguments.GetString( "game" );
+                gameVersion = Arguments.GetString( "version" );
+                gameURL = null;
             }
 
-            // Download
+            // Check the game URL for updates
             if( gameURL != null )
             {
                 // Downlaod the RSS file
                 Console.Write( "Checking for updates... " );
-                var rssFile = DownloadRSS( gameURL );
+                var rssFile = RSSFile.Download( gameURL );
 
-                // Get title, version and download URL from it
-                bool isLatest = false;
-                var entry = GetMatchingEntry( rssFile, ref gameTitle, ref gameVersion, ref isLatest );
-                string downloadURL = entry != null ? entry.Link : null;
+                // Extract information from it
+                bool isLatest;
+                var downloadURL = GetDownloadURL( rssFile, ref gameTitle, ref gameVersion, out isLatest );
                 if( downloadURL != null )
                 {
                     Console.WriteLine( "OK." );
-                    if( !DownloadAndInstall( downloadURL, gameTitle, gameVersion, isLatest ) )
+
+                    // Download and install the new version
+                    if( Download( gameTitle, gameVersion, downloadURL ) && Install( gameTitle, gameVersion ) )
                     {
-                        Console.WriteLine( "Update failed." );
+                        Record( gameTitle, gameVersion, isLatest );
                     }
                 }
                 else
@@ -453,15 +275,11 @@ namespace Dan200.Launcher.Main
                 }
             }
 
-            // Launch
+            // Launch what we've managed to download
             if( gameTitle != null )
             {
-                // Build the path
-                string gamePath = GetStorageDirectory();
-                gamePath = Path.Combine( gamePath, "Games" );
-                gamePath = Path.Combine( gamePath, gameTitle );
-
                 // Determine the version to run
+                string gamePath = Installer.GetBasePath( gameTitle );
                 if( gameVersion == null && File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
                 {
                     gameVersion = File.ReadAllText( Path.Combine( gamePath, "LatestVersion.txt" ) ).Trim();
@@ -470,15 +288,12 @@ namespace Dan200.Launcher.Main
                 if( gameVersion != null )
                 {
                     // Run the version
-                    string versionPath = gamePath;
-                    versionPath = Path.Combine( versionPath, "Versions" );
-                    versionPath = Path.Combine( versionPath, gameVersion );
-                    if( Directory.Exists( versionPath ) )
+                    if( Installer.IsGameInstalled( gameTitle, gameVersion ) )
                     {
                         Console.Write( "Launching game... " );
-                        if( Launcher.LaunchGame( versionPath, gameTitle ) )
+                        if( Launcher.LaunchGame( gameTitle, gameVersion ) )
                         {
-                            Console.WriteLine( "OK" );
+                            Console.WriteLine( "OK." );
                         }
                         else
                         {
