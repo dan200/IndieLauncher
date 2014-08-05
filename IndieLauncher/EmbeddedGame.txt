@@ -1,4 +1,8 @@
-﻿// Details of the embedded game to first install when running this launcher
-game=ExampleGame
+﻿// Details of the embedded game to install or download when running this launcher.
+// Field explanations:
+// game: Required. The name of the game to launch, this probably should not contain spaces
+// version: Optional. The version of the game that EmbeddedGame.zip represents, this may be omitted if no game is embedded.
+// url: Optional. The URL of the feed to check for updates, this may be omitted if you don't want to provide auto-updates for your embedded game.
+game=ExampleGame 
 version=1.0
 url=https://raw.githubusercontent.com/dan200/IndieLauncher/master/ExampleGame/ExampleGame.xml
