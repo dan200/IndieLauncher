@@ -129,13 +129,13 @@ namespace Dan200.Launcher.Main
             return null;
         }
 
-        private static bool Download( string gameTitle, string gameVersion, string downloadURL )
+        private static bool Download( string gameTitle, string gameDescription, string gameVersion, string downloadURL )
         {
             // Download
             if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
             {
                 Console.Write( "Downloading update... " );
-                var progressWindow = Dialogs.CreateDownloadWindow( gameTitle );
+                var progressWindow = Dialogs.CreateDownloadWindow( gameDescription );
                 if( Installer.DownloadGame( gameTitle, gameVersion, downloadURL, delegate( int progress ) {
                     progressWindow.SetProgress( progress );
                 } ) )
@@ -297,7 +297,7 @@ namespace Dan200.Launcher.Main
                     }
                     if( update )
                     {
-                        if( Download( gameTitle, downloadGameVersion, downloadURL ) && Install( gameTitle, downloadGameVersion ) )
+                        if( Download( gameTitle, gameDescription, downloadGameVersion, downloadURL ) && Install( gameTitle, downloadGameVersion ) )
                         {
                             targetGameVersion = downloadGameVersion;
                             RecordLatestVersion( gameTitle, downloadGameVersion, isLatest );
