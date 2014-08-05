@@ -9,8 +9,6 @@ namespace Dan200.Launcher.GUI
     {
         public static void Init()
         {
-            WinFormsDialogs.Init();
-            WinFormsDialogs.CreateDownloadWindow( "Test" );
             switch( Program.Platform )
             {
                 case Platform.Windows:

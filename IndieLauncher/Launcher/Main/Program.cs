@@ -92,41 +92,38 @@ namespace Dan200.Launcher.Main
             };
         }
 
-        private static string GetDownloadURL( RSSFile file, string targetGameTitle, string targetGameVersion, out string o_gameTitle, out string o_gameDescription, out string o_gameVersion, out bool o_isLatest )
+        private static bool ExtractGameInfo( RSSFile rssFile, string gameTitle, ref string io_version, out bool o_versionIsLatest, out string o_description, out string o_downloadURL )
         {
-            if( file != null )
+            if( rssFile != null )
             {
-                foreach( var channel in file.Channels )
+                // Find a matching title
+                foreach( var channel in rssFile.Channels )
                 {
-                    if( channel.Title != null )
+                    if( channel.Title == gameTitle )
                     {
-                        if( targetGameTitle == null || channel.Title == targetGameTitle )
+                        // Find a matching entry
+                        for( int i=0; i<channel.Entries.Count; ++i )
                         {
-                            o_gameTitle = channel.Title;
-                            o_gameDescription = (channel.Description != null) ? channel.Description : channel.Title;
-                            for( int i=0; i<channel.Entries.Count; ++i )
+                            var entry = channel.Entries[ i ];
+                            if( entry.Title != null && entry.Link != null )
                             {
-                                var entry = channel.Entries[ i ];
-                                if( entry.Title != null )
+                                if( io_version == null || entry.Title == io_version )
                                 {
-                                    if( targetGameVersion == null || entry.Title == targetGameVersion )
-                                    {
-                                        o_gameVersion = entry.Title;
-                                        o_isLatest = (i == 0);
-                                        return entry.Link;
-                                    }
+                                    io_version = entry.Title;
+                                    o_versionIsLatest = (i == 0);
+                                    o_description = (channel.Description != null) ? channel.Description : entry.Title;
+                                    o_downloadURL = entry.Link;
+                                    return true;
                                 }
                             }
-                            break;
                         }
                     }
                 }
             }
-            o_gameTitle = default( string );
-            o_gameDescription = default( string );
-            o_gameVersion = default( string );
-            o_isLatest = default( bool );
-            return null;
+            o_versionIsLatest = false;
+            o_description = null;
+            o_downloadURL = null;
+            return false;
         }
 
         private static bool Download( string gameTitle, string gameDescription, string gameVersion, string downloadURL )
@@ -140,12 +137,12 @@ namespace Dan200.Launcher.Main
                     progressWindow.SetProgress( progress );
                 } ) )
                 {
-                    Console.WriteLine( "OK." );
+                    Console.WriteLine( "OK" );
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine( "Failed." );
+                    Console.WriteLine( "Failed" );
                     return false;
                 }
             }
@@ -164,12 +161,12 @@ namespace Dan200.Launcher.Main
                 Console.Write( "Installing update... " );
                 if( Installer.InstallGame( gameTitle, gameVersion ) )
                 {
-                    Console.WriteLine( "OK." );
+                    Console.WriteLine( "OK" );
                     return true;
                 }
                 else
                 {
-                    Console.WriteLine( "Failed." );
+                    Console.WriteLine( "Failed" );
                     return false;
                 }
             }
@@ -200,42 +197,46 @@ namespace Dan200.Launcher.Main
             return null;
         }
 
-        private static bool ExtractEmbedded( string gameTitle, string gameVersion )
+        private static bool InstallEmbeddedGame()
         {
             // Extract the embedded game
-            if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
-            {                   
-                Console.Write( "Extracting embedded game... " );
-                if( Installer.ExtractEmbeddedGame() )
-                {
-                    Console.WriteLine( "OK." );
-                }
-                else
-                {
-                    Console.WriteLine( "Failed." );
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        private static bool InstallEmbedded( string gameTitle, string gameVersion )
-        {
-            // Install the embedded game
-            if( !Installer.IsGameInstalled( gameTitle, gameVersion ) )
+            string gameTitle, gameVersion, updateURL;
+            if( Installer.GetEmbeddedGame( out gameTitle, out gameVersion, out updateURL ) )
             {
-                Console.Write( "Installing embedded game... " );
-                if( Installer.InstallGame( gameTitle, gameVersion ) )
+                if( gameVersion != null )
                 {
-                    Console.WriteLine( "OK." );
-                }
-                else
-                {
-                    Console.WriteLine( "Failed." );
-                    return false;
+                    // Extract
+                    if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
+                    {                   
+                        Console.Write( "Extracting embedded game... " );
+                        if( !Installer.ExtractEmbeddedGame() )
+                        {
+                            Console.WriteLine( "Failed" );
+                            return false;
+                        }
+                        else
+                        {
+                            Console.WriteLine( "OK" );
+                        }
+                    }
+
+                    // Install
+                    if( !Installer.IsGameInstalled( gameTitle, gameVersion ) )
+                    {
+                        Console.Write( "Installing embedded game... " );
+                        if( !Installer.InstallGame( gameTitle, gameVersion ) )
+                        {
+                            Console.WriteLine( "Failed" );
+                            return false;
+                        }
+                        Console.WriteLine( "OK" );
+                        RecordLatestVersion( gameTitle, gameVersion, false );
+                    }
+
+                    return true;
                 }
             }
-            return true;
+            return false;
         }
 
 		public static void Main( string[] args )
@@ -247,116 +248,123 @@ namespace Dan200.Launcher.Main
             Dialogs.Init();
 
             // Install the embedded game
-            string gameTitle, targetGameVersion, gameURL;
+            InstallEmbeddedGame();
+
+            // Determine which game and which version to run
+            string gameTitle, gameVersion, updateURL;
             string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
             if( Installer.GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
             {
-                if( embeddedGameVersion != null &&
-                    ExtractEmbedded( embeddedGameTitle, embeddedGameVersion ) &&
-                    InstallEmbedded( embeddedGameTitle, embeddedGameVersion ) )
-                {
-                    RecordLatestVersion( embeddedGameTitle, embeddedGameVersion, false );
-                }
-
+                // Run game from embedded game info
                 gameTitle = embeddedGameTitle;
-                targetGameVersion = Arguments.GetString( "version" );
-                gameURL = embeddedGameURL;
+                gameVersion = Arguments.GetString( "version" );
+                updateURL = embeddedGameURL;
             }
             else
             {
+                // Run game from command line
                 gameTitle = Arguments.GetString( "game" );
-                targetGameVersion = Arguments.GetString( "version" );
-                gameURL = null;
+                gameVersion = Arguments.GetString( "version" );
+                updateURL = null;
             }
-
-            // Check the game URL for updates
-            if( gameURL != null )
-            {
-                // Downlaod the RSS file
-                Console.Write( "Checking for updates... " );
-                var rssFile = RSSFile.Download( gameURL );
-
-                // Extract information from it
-                bool isLatest;
-                string downloadGameVersion;
-                string gameDescription;
-                var downloadURL = GetDownloadURL( rssFile, gameTitle, targetGameVersion, out gameTitle, out gameDescription, out downloadGameVersion, out isLatest );
-                if( downloadURL != null )
-                {
-                    Console.WriteLine( "OK." );
-
-                    // Download and install the new version
-                    bool update = true;
-                    if( !Installer.IsGameInstalled( gameTitle, downloadGameVersion ) )
-                    {
-                        var latestVersion = GetLatestVersion( gameTitle );
-                        if( latestVersion != null )
-                        {
-                            update = Dialogs.PromptForUpdate( gameDescription );
-                        }
-                    }
-                    if( update )
-                    {
-                        if( Download( gameTitle, gameDescription, downloadGameVersion, downloadURL ) && Install( gameTitle, downloadGameVersion ) )
-                        {
-                            targetGameVersion = downloadGameVersion;
-                            RecordLatestVersion( gameTitle, downloadGameVersion, isLatest );
-                        }
-                    }
-                    else
-                    {
-                        targetGameVersion = null;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine( "None found." );
-                }
-            }
-
-            // Launch what we've managed to download
-            if( gameTitle != null )
-            {
-                // Determine the version to run
-                string gamePath = Installer.GetBasePath( gameTitle );
-                string gameVersion;
-                if( targetGameVersion != null )
-                {
-                    gameVersion = targetGameVersion;
-                }
-                else
-                {
-                    gameVersion = GetLatestVersion( gameTitle );
-                }
-
-                if( gameVersion != null )
-                {
-                    // Run the version
-                    if( Installer.IsGameInstalled( gameTitle, gameVersion ) )
-                    {
-                        Console.Write( "Launching game... " );
-                        if( Launcher.LaunchGame( gameTitle, gameVersion ) )
-                        {
-                            Console.WriteLine( "OK." );
-                        }
-                        else
-                        {
-                            Console.WriteLine( "Failed." );
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine( "Specified version not found." );
-                    }
-                }
-                else
-                {
-                    Console.WriteLine( "No version specified." );
-                }
-            }
-            else
+                
+            // Abort if no game specified
+            if( gameTitle == null )
             {
                 Console.WriteLine( "No game specified." );
+                return;
+            }
+
+            // If a version is specified and already installed, run it
+            if( gameVersion != null && Installer.IsGameInstalled( gameTitle, gameVersion ) )
+            {
+                Console.Write( "Launching game... " );
+                if( Launcher.LaunchGame( gameTitle, gameVersion ) )
+                {
+                    Console.WriteLine( "OK" );
+                }
+                else
+                {
+                    Console.WriteLine( "Failed" );
+                }
+                return;
+            }
+
+            // Check for updates
+            if( updateURL != null )
+            {
+                // Download the RSS file
+                Console.Write( "Checking for updates... " );
+                var rssFile = RSSFile.Download( updateURL );
+
+                // Extract information from it
+                bool gameVersionIsStrict = (gameVersion != null);
+                bool gameVersionIsLatest;
+                string gameDescription;
+                string downloadURL;
+                if( ExtractGameInfo( rssFile, gameTitle, ref gameVersion, out gameVersionIsLatest, out gameDescription, out downloadURL ) )
+                {
+                    Console.WriteLine( "OK" );
+
+                    // Determine whether to download an update
+                    bool downloadUpdate = false;
+                    var latestVersion = GetLatestVersion( gameTitle );
+                    if( gameVersionIsStrict || latestVersion == null )
+                    {
+                        downloadUpdate = !Installer.IsGameInstalled( gameTitle, gameVersion );
+                    }
+                    else
+                    {
+                        downloadUpdate = !Installer.IsGameInstalled( gameTitle, gameVersion ) && Dialogs.PromptForUpdate( gameDescription );
+                    }
+
+                    // Download the update
+                    if( downloadUpdate &&
+                        Download( gameTitle, gameDescription, gameVersion, downloadURL ) &&
+                        Install( gameTitle, gameVersion ) )
+                    {
+                        RecordLatestVersion( gameTitle, gameVersion, gameVersionIsLatest );
+                    }
+                    if( !gameVersionIsStrict )
+                    {
+                        gameVersion = null;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine( "Failed" );
+                }
+            }
+
+            {
+                // Determine the version to run
+                if( gameVersion == null )
+                {
+                    gameVersion = GetLatestVersion( gameTitle );
+                    if( gameVersion == null || !Installer.IsGameInstalled( gameTitle, gameVersion ) )
+                    {
+                        Console.WriteLine( "Unable to determine version to run." );
+                        return;
+                    }
+                }
+
+                // Run that version
+                if( Installer.IsGameInstalled( gameTitle, gameVersion ) )
+                {
+                    Console.Write( "Launching game... " );
+                    if( Launcher.LaunchGame( gameTitle, gameVersion ) )
+                    {
+                        Console.WriteLine( "OK" );
+                    }
+                    else
+                    {
+                        Console.WriteLine( "Failed" );
+                    }
+                }
+                else
+                {
+                    Console.WriteLine( "Requested version not installed." );
+                }
             }
 		}
 	}
