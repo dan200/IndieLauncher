@@ -92,7 +92,7 @@ namespace Dan200.Launcher.Main
             };
         }
 
-        private static string GetDownloadURL( RSSFile file, string targetGameTitle, string targetGameVersion, out string o_gameTitle, out string o_gameVersion, out bool o_isLatest )
+        private static string GetDownloadURL( RSSFile file, string targetGameTitle, string targetGameVersion, out string o_gameTitle, out string o_gameDescription, out string o_gameVersion, out bool o_isLatest )
         {
             if( file != null )
             {
@@ -103,6 +103,7 @@ namespace Dan200.Launcher.Main
                         if( targetGameTitle == null || channel.Title == targetGameTitle )
                         {
                             o_gameTitle = channel.Title;
+                            o_gameDescription = (channel.Description != null) ? channel.Description : channel.Title;
                             for( int i=0; i<channel.Entries.Count; ++i )
                             {
                                 var entry = channel.Entries[ i ];
@@ -122,6 +123,7 @@ namespace Dan200.Launcher.Main
                 }
             }
             o_gameTitle = default( string );
+            o_gameDescription = default( string );
             o_gameVersion = default( string );
             o_isLatest = default( bool );
             return null;
@@ -277,7 +279,8 @@ namespace Dan200.Launcher.Main
                 // Extract information from it
                 bool isLatest;
                 string downloadGameVersion;
-                var downloadURL = GetDownloadURL( rssFile, gameTitle, targetGameVersion, out gameTitle, out downloadGameVersion, out isLatest );
+                string gameDescription;
+                var downloadURL = GetDownloadURL( rssFile, gameTitle, targetGameVersion, out gameTitle, out gameDescription, out downloadGameVersion, out isLatest );
                 if( downloadURL != null )
                 {
                     Console.WriteLine( "OK." );
@@ -289,7 +292,7 @@ namespace Dan200.Launcher.Main
                         var latestVersion = GetLatestVersion( gameTitle );
                         if( latestVersion != null )
                         {
-                            update = Dialogs.PromptForUpdate( gameTitle );
+                            update = Dialogs.PromptForUpdate( gameDescription );
                         }
                     }
                     if( update )
