@@ -125,16 +125,16 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool DownloadGame( string gameTitle, string gameVersion, string url )
+        public static bool DownloadGame( string gameTitle, string gameVersion, string url, ProgressDelegate listener )
         {
             var downloadPath = GetDownloadPath( gameTitle, gameVersion );
             try
             {
                 var request = HttpWebRequest.Create( url );
-                request.Timeout = 15000;
+                request.Timeout = 10000;
                 using( var response = request.GetResponse() )
                 {
-                    using( var stream = response.GetResponseStream() )
+                    using( var stream = new ProgressStream( response.GetResponseStream(), listener ) )
                     {
                         // Delete old download
                         if( File.Exists( downloadPath ) )

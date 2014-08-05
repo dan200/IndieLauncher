@@ -7,6 +7,7 @@ using Ionic.Zip;
 using System.Runtime.InteropServices;
 using Dan200.Launcher.Util;
 using System.Reflection;
+using Dan200.Launcher.GUI;
 
 namespace Dan200.Launcher.Main
 {
@@ -84,13 +85,14 @@ namespace Dan200.Launcher.Main
         private static void SetupEmbeddedAssemblies()
         {
             EmbeddedAssembly.Load( "Ionic.Zip.dll" );
+            EmbeddedAssembly.Load( "MonoMac.dll" );
             AppDomain.CurrentDomain.AssemblyResolve += delegate(object sender, ResolveEventArgs args )
             {
                 return EmbeddedAssembly.Get( args.Name );
             };
         }
 
-        private static string GetDownloadURL( RSSFile file, ref string io_game, ref string io_version, out bool o_isLatest )
+        private static string GetDownloadURL( RSSFile file, string targetGameTitle, string targetGameVersion, out string o_gameTitle, out string o_gameVersion, out bool o_isLatest )
         {
             if( file != null )
             {
@@ -98,17 +100,17 @@ namespace Dan200.Launcher.Main
                 {
                     if( channel.Title != null )
                     {
-                        if( io_game == null || channel.Title == io_game )
+                        if( targetGameTitle == null || channel.Title == targetGameTitle )
                         {
-                            io_game = channel.Title;
+                            o_gameTitle = channel.Title;
                             for( int i=0; i<channel.Entries.Count; ++i )
                             {
                                 var entry = channel.Entries[ i ];
                                 if( entry.Title != null )
                                 {
-                                    if( io_version == null || entry.Title == io_version )
+                                    if( targetGameVersion == null || entry.Title == targetGameVersion )
                                     {
-                                        io_version = entry.Title;
+                                        o_gameVersion = entry.Title;
                                         o_isLatest = (i == 0);
                                         return entry.Link;
                                     }
@@ -119,6 +121,8 @@ namespace Dan200.Launcher.Main
                     }
                 }
             }
+            o_gameTitle = default( string );
+            o_gameVersion = default( string );
             o_isLatest = default( bool );
             return null;
         }
@@ -129,7 +133,10 @@ namespace Dan200.Launcher.Main
             if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
             {
                 Console.Write( "Downloading update... " );
-                if( Installer.DownloadGame( gameTitle, gameVersion, downloadURL ) )
+                var progressWindow = Dialogs.CreateDownloadWindow( gameTitle );
+                if( Installer.DownloadGame( gameTitle, gameVersion, downloadURL, delegate( int progress ) {
+                    progressWindow.SetProgress( progress );
+                } ) )
                 {
                     Console.WriteLine( "OK." );
                     return true;
@@ -171,7 +178,7 @@ namespace Dan200.Launcher.Main
             }
         }
 
-        private static void Record( string gameTitle, string gameVersion, bool overwrite )
+        private static void RecordLatestVersion( string gameTitle, string gameVersion, bool overwrite )
         {
             // Record that this file is the latest
             var gamePath = Installer.GetBasePath( gameTitle );
@@ -179,6 +186,16 @@ namespace Dan200.Launcher.Main
             {
                 File.WriteAllText( Path.Combine( gamePath, "LatestVersion.txt" ), gameVersion );
             }
+        }
+
+        public static string GetLatestVersion( string gameTitle )
+        {
+            var gamePath = Installer.GetBasePath( gameTitle );
+            if( File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+            {
+                return File.ReadAllText( Path.Combine( gamePath, "LatestVersion.txt" ) ).Trim();
+            }
+            return null;
         }
 
         private static bool ExtractEmbedded( string gameTitle, string gameVersion )
@@ -225,9 +242,10 @@ namespace Dan200.Launcher.Main
             SetupEmbeddedAssemblies();
             Platform = DeterminePlatform();
             Arguments = new ProgramArguments( args );
+            Dialogs.Init();
 
             // Install the embedded game
-            string gameTitle, gameVersion, gameURL;
+            string gameTitle, targetGameVersion, gameURL;
             string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
             if( Installer.GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
             {
@@ -235,17 +253,17 @@ namespace Dan200.Launcher.Main
                     ExtractEmbedded( embeddedGameTitle, embeddedGameVersion ) &&
                     InstallEmbedded( embeddedGameTitle, embeddedGameVersion ) )
                 {
-                    Record( embeddedGameTitle, embeddedGameVersion, false );
+                    RecordLatestVersion( embeddedGameTitle, embeddedGameVersion, false );
                 }
 
                 gameTitle = embeddedGameTitle;
-                gameVersion = Arguments.GetString( "version" );
+                targetGameVersion = Arguments.GetString( "version" );
                 gameURL = embeddedGameURL;
             }
             else
             {
                 gameTitle = Arguments.GetString( "game" );
-                gameVersion = Arguments.GetString( "version" );
+                targetGameVersion = Arguments.GetString( "version" );
                 gameURL = null;
             }
 
@@ -258,15 +276,33 @@ namespace Dan200.Launcher.Main
 
                 // Extract information from it
                 bool isLatest;
-                var downloadURL = GetDownloadURL( rssFile, ref gameTitle, ref gameVersion, out isLatest );
+                string downloadGameVersion;
+                var downloadURL = GetDownloadURL( rssFile, gameTitle, targetGameVersion, out gameTitle, out downloadGameVersion, out isLatest );
                 if( downloadURL != null )
                 {
                     Console.WriteLine( "OK." );
 
                     // Download and install the new version
-                    if( Download( gameTitle, gameVersion, downloadURL ) && Install( gameTitle, gameVersion ) )
+                    bool update = true;
+                    if( !Installer.IsGameInstalled( gameTitle, downloadGameVersion ) )
                     {
-                        Record( gameTitle, gameVersion, isLatest );
+                        var latestVersion = GetLatestVersion( gameTitle );
+                        if( latestVersion != null )
+                        {
+                            update = Dialogs.PromptForUpdate( gameTitle );
+                        }
+                    }
+                    if( update )
+                    {
+                        if( Download( gameTitle, downloadGameVersion, downloadURL ) && Install( gameTitle, downloadGameVersion ) )
+                        {
+                            targetGameVersion = downloadGameVersion;
+                            RecordLatestVersion( gameTitle, downloadGameVersion, isLatest );
+                        }
+                    }
+                    else
+                    {
+                        targetGameVersion = null;
                     }
                 }
                 else
@@ -280,9 +316,14 @@ namespace Dan200.Launcher.Main
             {
                 // Determine the version to run
                 string gamePath = Installer.GetBasePath( gameTitle );
-                if( gameVersion == null && File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+                string gameVersion;
+                if( targetGameVersion != null )
                 {
-                    gameVersion = File.ReadAllText( Path.Combine( gamePath, "LatestVersion.txt" ) ).Trim();
+                    gameVersion = targetGameVersion;
+                }
+                else
+                {
+                    gameVersion = GetLatestVersion( gameTitle );
                 }
 
                 if( gameVersion != null )
