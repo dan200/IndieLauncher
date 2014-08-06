@@ -82,7 +82,7 @@ namespace Dan200.Launcher.Main
                 else
                 {
                     // If no exe was found, just open the folder
-                    //Process.Start( gamePath );
+                    Process.Start( gamePath );
                     return true;
                 }
                 return true;

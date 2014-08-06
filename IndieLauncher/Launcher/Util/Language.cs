@@ -14,7 +14,6 @@ namespace Dan200.Launcher.Util
             var currentAssembly = Assembly.GetExecutingAssembly();
             foreach( string resource in currentAssembly.GetManifestResourceNames() )
             {
-                Console.WriteLine( resource );
                 if( resource.StartsWith( "Resources.Languages." ) )
                 {
                     string fileName = resource.Substring( "Resources.Languages.".Length );
