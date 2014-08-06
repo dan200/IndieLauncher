@@ -33,23 +33,6 @@ namespace Dan200.Launcher.Interface.GTK
             if( gameTitle != null )
             {
                 ShowUpdateWindow( gameTitle, gameVersion, updateURL );
-                /*
-                if( updateURL != null )
-                {
-                }
-                else
-                {
-                    string latestVersion = Installer.GetLatestInstalledVersion( gameTitle );
-                    if( latestVersion != null )
-                    {
-                        LaunchGame( gameTitle, latestVersion );
-                    }
-                    else
-                    {
-                        ShowErrorWindow( "Game not installed. Exiting." );
-                    }
-                }
-                */
             }
             else
             {

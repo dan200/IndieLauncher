@@ -5,7 +5,7 @@ using Dan200.Launcher.RSS;
 
 namespace Dan200.Launcher.Main
 {
-    public class GameUpdater
+    public class GameUpdater : ICancellable
     {
         private string m_gameTitle;
         private string m_optionalGameVersion;
@@ -89,7 +89,7 @@ namespace Dan200.Launcher.Main
             }
         }
 
-        private bool Cancelled
+        public bool Cancelled
         {
             get
             {
@@ -133,250 +133,371 @@ namespace Dan200.Launcher.Main
             return m_promptResponse;
         }
 
-        private bool DownloadAndInstall( string gameVersion, string downloadURL, bool isNew )
+        private bool Extract()
         {
-            // Download the game
-            if( !Installer.IsGameDownloaded( m_gameTitle, gameVersion ) )
+            string embeddedGameVersion = Installer.GetEmbeddedGameVersion( m_gameTitle );
+            if( !Installer.IsGameDownloaded( m_gameTitle, embeddedGameVersion ) )
             {
-                string embeddedGameTitle, embeddedGameVersion, embeddedDownloadURL;
-                if( Installer.GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedDownloadURL ) && embeddedGameVersion == gameVersion )
+                Stage = GameUpdateStage.ExtractingUpdate;
+                if( !Installer.ExtractEmbeddedGame( delegate( int progress ) {
+                    StageProgress = (double)progress / 100.0;
+                } ) )
                 {
-                    // Install from the embedded resources
-                    Stage = GameUpdateStage.ExtractingUpdate;
-                    if( !Installer.ExtractEmbeddedGame( delegate( int progress ) {
-                        StageProgress = (double)progress / 100.0;
-                    } ) )
-                    {
-                        Stage = GameUpdateStage.Failed;
-                        return false;
-                    }
-                }
-                else
-                {
-                    // Download from the URL
-                    Stage = GameUpdateStage.DownloadingUpdate;
-                    if( !Installer.DownloadGame( m_gameTitle, gameVersion, downloadURL, delegate( int progress ) {
-                        StageProgress = (double)progress / 100.0;
-                    } ) )
-                    {
-                        Stage = GameUpdateStage.Failed;
-                        return false;
-                    }
+                    return false;
                 }
                 if( Cancelled )
                 {
-                    Stage = GameUpdateStage.Cancelled;
                     return false;
                 }
                 StageProgress = 1.0;
             }
+            return true;
+        }
 
-            // Install the game
-            Stage = GameUpdateStage.InstallingUpdate;
-            if( !Installer.InstallGame( m_gameTitle, gameVersion ) )
+        private bool Download( string gameVersion, string downloadURL )
+        {
+            if( !Installer.IsGameDownloaded( m_gameTitle, gameVersion ) )
             {
-                Stage = GameUpdateStage.Failed;
-                return false;
+                Stage = GameUpdateStage.DownloadingUpdate;
+                if( !Installer.DownloadGame( m_gameTitle, gameVersion, downloadURL, delegate( int progress ) {
+                    StageProgress = (double)progress / 100.0;
+                } ) )
+                {
+                    return false;
+                }
+                if( Cancelled )
+                {
+                    return false;
+                }
+                StageProgress = 1.0;
             }
-            if( Cancelled )
+            return true;
+        }
+
+        private bool Install( string gameVersion )
+        {
+            if( !Installer.IsGameInstalled( m_gameTitle, gameVersion ) )
             {
-                Stage = GameUpdateStage.Cancelled;
-                return false;
+                Stage = GameUpdateStage.InstallingUpdate;
+                if( !Installer.InstallGame( m_gameTitle, gameVersion ) )
+                {
+                    return false;
+                }
+                if( Cancelled )
+                {
+                    return false;
+                }
+                StageProgress = 1.0;
             }
-            StageProgress = 0.99;
-            Installer.RecordLatestInstalledVersion( m_gameTitle, gameVersion, isNew );
-            StageProgress = 1.0;
+            return true;
+        }
+
+        private bool DownloadAndInstall( string gameVersion, string downloadURL, bool isLatest )
+        {
+            if( !Installer.IsGameInstalled( m_gameTitle, gameVersion ) )
+            {
+                if( !Download( gameVersion, downloadURL ) )
+                {
+                    return false;
+                }
+                if( Install( gameVersion ) )
+                {
+                    Installer.RecordLatestInstalledVersion( m_gameTitle, gameVersion, isLatest );
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    
+        private bool ExtractAndInstall()
+        {
+            string embeddedGameVersion = Installer.GetEmbeddedGameVersion( m_gameTitle );
+            if( !Installer.IsGameInstalled( m_gameTitle, embeddedGameVersion ) )
+            {
+                if( !Extract() )
+                {
+                    return false;
+                }
+                if( Install( embeddedGameVersion ) )
+                {
+                    Installer.RecordLatestInstalledVersion( m_gameTitle, embeddedGameVersion, false );
+                }
+                else
+                {
+                    return false;
+                }
+            }
             return true;
         }
 
         private bool Launch( string gameVersion )
         {
             Stage = GameUpdateStage.LaunchingGame;
+            if( Cancelled )
+            {
+                return false;
+            }
             if( !GameLauncher.LaunchGame( m_gameTitle, gameVersion ) )
             {
-                Stage = GameUpdateStage.Failed;
                 return false;
             }
             StageProgress = 1.0;
             return true;
         }
 
-        public bool CheckForUpdates( string updateURL, out string o_gameVersion, out string o_downloadURL, out bool o_gameVersionIsNewest )
+        private RSSFile DownloadRSSFile( string updateURL )
         {
             // Download RSS file
             Stage = GameUpdateStage.CheckingForUpdate;
             var rssFile = RSSFile.Download( m_optionalUpdateURL, delegate(int percentage) {
-                StageProgress = 0.99 * ((double)percentage / 100.0);
+                StageProgress = (double)percentage / 100.0;
             } );
-            if( Cancelled )
-            {
-                o_gameVersion = null;
-                o_downloadURL = null;
-                o_gameVersionIsNewest = false;
-                return false;
-            }
             if( rssFile == null )
             {
-                o_gameVersion = null;
+                return null;
+            }
+            if( Cancelled )
+            {
+                return null;
+            }
+            StageProgress = 1.0;
+            return rssFile;
+        }
+
+        public bool GetSpecificDownloadURL( string updateURL, string gameVersion, out string o_downloadURL, out bool o_isNewest )
+        {
+            // Get the RSS file
+            var rssFile = DownloadRSSFile( updateURL );
+            if( rssFile == null )
+            {
                 o_downloadURL = null;
-                o_gameVersionIsNewest = false;
+                o_isNewest = false;
                 return false;
             }
-            StageProgress = 0.99;
 
             // Inspect RSS file for version download info
             string gameDescription;
             string updateDescription;
-            if( m_optionalGameVersion != null )
+            if( !Installer.GetSpecificVersionInfo( rssFile, m_gameTitle, gameVersion, out gameDescription, out o_downloadURL, out updateDescription, out o_isNewest ) )
             {
-                if( !Installer.GetSpecifiedVersionInfo( rssFile, m_gameTitle, m_optionalGameVersion, out gameDescription, out o_downloadURL, out updateDescription, out o_gameVersionIsNewest ) )
-                {
-                    o_gameVersion = null;
-                    o_downloadURL = null;
-                    return false;
-                }
-                else
-                {
-                    o_gameVersion = m_optionalGameVersion;
-                }
+                o_downloadURL = null;
+                o_isNewest = false;
+                return false;
             }
-            else
-            {
-                if( !Installer.GetLatestVersionInfo( rssFile, m_gameTitle, out o_gameVersion, out gameDescription, out o_downloadURL, out updateDescription, out o_gameVersionIsNewest ) )
-                {
-                    o_gameVersion = null;
-                    o_downloadURL = null;
-                    return false;
-                }
-            }
-            if( Cancelled )
+            return true;
+        }
+
+        public bool GetLatestDownloadURL( string updateURL, out string o_gameVersion, out string o_downloadURL )
+        {
+            // Get the RSS file
+            var rssFile = DownloadRSSFile( updateURL );
+            if( rssFile == null )
             {
                 o_gameVersion = null;
                 o_downloadURL = null;
                 return false;
             }
-            StageProgress = 1.0;
+
+            // Inspect RSS file for version download info
+            string gameDescription;
+            string updateDescription;
+            bool gameVersionIsNewest;
+            if( !Installer.GetLatestVersionInfo( rssFile, m_gameTitle, out o_gameVersion, out gameDescription, out o_downloadURL, out updateDescription, out gameVersionIsNewest ) )
+            {
+                o_gameVersion = null;
+                o_downloadURL = null;
+                return false;
+            }
             return true;
+        }
+
+        private void Fail()
+        {
+            Stage = GameUpdateStage.Failed;
+        }
+
+        private void Finish()
+        {
+            Stage = GameUpdateStage.Finished;
+        }
+
+        private void FailOrCancel()
+        {
+            if( Cancelled )
+            {
+                Stage = GameUpdateStage.Cancelled;
+            }
+            else
+            {
+                Stage = GameUpdateStage.Failed;
+            }
+        }
+
+        public bool TryCancel()
+        {
+            if( Cancelled )
+            {
+                Stage = GameUpdateStage.Cancelled;
+                return true;
+            }
+            return false;
         }
 
         public void Start()
         {
             if( Stage == GameUpdateStage.NotStarted )
             {
-                Task.Factory.StartNew( delegate
+                Task.Factory.StartNew( delegate()
                 {
-                    // If a specific version is requested and already installed, just launch it
+                    string latestInstalledVersion = Installer.GetLatestInstalledVersion( m_gameTitle );
+                    string embeddedGameVersion = Installer.GetEmbeddedGameVersion( m_gameTitle );
                     if( m_optionalGameVersion != null )
                     {
-                        if( Installer.IsGameInstalled( m_gameTitle, m_optionalGameVersion ) )
+                        // A specific version has been requested
+                        // Try to locate it:
+                        if( !Installer.IsGameInstalled( m_gameTitle, m_optionalGameVersion ) )
                         {
-                            Launch( m_optionalGameVersion );
-                            return;
-                        }
-                    }
-
-                    // Figure out what version we need to try and install (and where to get it)
-                    string latestInstalledVersion = Installer.GetLatestInstalledVersion( m_gameTitle );
-                    string embeddedGameTitle, embeddedGameVersion, embeddedGameUpdateURL;
-                    Installer.GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameUpdateURL );
-
-                    string gameVersion, downloadURL;
-                    bool gameVersionIsNewest = false;
-                    if( m_optionalUpdateURL == null || !CheckForUpdates( m_optionalUpdateURL, out gameVersion, out downloadURL, out gameVersionIsNewest ) )
-                    {
-                        if( Cancelled )
-                        {
-                            Stage = GameUpdateStage.Cancelled;
-                            gameVersion = null;
-                            downloadURL = null;
-                            return;
-                        }
-                        if( m_optionalGameVersion != null )
-                        {
-                            // Use the version specified
-                            gameVersion = m_optionalGameVersion;
-                            downloadURL = null;
-                        }
-                        else if( latestInstalledVersion != null )
-                        {
-                            // Use the latest installed version
-                            gameVersion = latestInstalledVersion;
-                            downloadURL = null;
-                        }
-                        else if( embeddedGameVersion != null)
-                        {
-                            // Use the embedded version
-                            gameVersion = embeddedGameVersion;
-                            downloadURL = null;
-                        }
-                        else
-                        {
-                            // Give up
-                            Stage = GameUpdateStage.Failed;
-                            gameVersion = null;
-                            downloadURL = null;
-                            return;
-                        }
-                    }
-
-                    // See if the game needs to be updated
-                    if( !Installer.IsGameInstalled( m_gameTitle, gameVersion ) )
-                    {
-                        if( m_optionalGameVersion != null )
-                        {
-                            // If a specific version was requested and we don't have it, we must download it
-                            if( !DownloadAndInstall( gameVersion, downloadURL, gameVersionIsNewest ) )
+                            if( m_optionalGameVersion == embeddedGameVersion )
                             {
+                                // Try to extract it
+                                if( !ExtractAndInstall() )
+                                {
+                                    FailOrCancel();
+                                    return;
+                                }
+                            }
+                            else if( m_optionalUpdateURL != null )
+                            {
+                                // Try to download it
+                                string downloadURL;
+                                bool isNewest;
+                                if( !GetSpecificDownloadURL( m_optionalUpdateURL, m_optionalGameVersion, out downloadURL, out isNewest ) )
+                                {
+                                    FailOrCancel();
+                                    return;
+                                }
+                                if( !DownloadAndInstall( m_optionalGameVersion, downloadURL, isNewest ) )
+                                {
+                                    FailOrCancel();
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                // Give up
+                                Fail();
                                 return;
                             }
                         }
-                        else
+
+                        // Try to run it
+                        if( !Launch( m_optionalGameVersion ) )
                         {
-                            // If no specific version was requested and we have an existing version, give the player a choice
-                            string fallbackVersion = null;
-                            if( latestInstalledVersion != null )
+                            FailOrCancel();
+                            return;
+                        }
+
+                        // Finish
+                        Finish();
+                    }
+                    else
+                    {
+                        // The "latest" version has been requested
+                        // Try to determine what it is:
+                        string latestVersion = null;
+                        string latestVersionDownloadURL = null;
+                        if( m_optionalUpdateURL != null )
+                        {
+                            if( !GetLatestDownloadURL( m_optionalUpdateURL, out latestVersion, out latestVersionDownloadURL ) )
                             {
-                                fallbackVersion = latestInstalledVersion;
-                            }
-                            else if( embeddedGameVersion != null )
-                            {
-                                fallbackVersion = embeddedGameVersion;
-                            }
-                            if( fallbackVersion == null || ShowPrompt( GameUpdatePrompt.DownloadNewVersion ) )
-                            {
-                                if( !DownloadAndInstall( gameVersion, downloadURL, gameVersionIsNewest ) )
+                                if( TryCancel() )
                                 {
-                                    if( fallbackVersion == null || !ShowPrompt( GameUpdatePrompt.LaunchOldVersion ) )
+                                    return;
+                                }
+                            }
+                        }
+
+                        string launchVersion = null;
+                        if( latestVersion != null )
+                        {
+                            if( Installer.IsGameInstalled( m_gameTitle, latestVersion ) )
+                            {
+                                // If we already have it, there's nothing to do
+                                launchVersion = latestVersion;
+                            }
+                            else
+                            {
+                                // Try to download it (with the users consent)
+                                if( latestVersionDownloadURL != null )
+                                {
+                                    bool fallbackAvailable = (latestInstalledVersion != null) || (embeddedGameVersion != null);
+                                    if( !fallbackAvailable || ShowPrompt( GameUpdatePrompt.DownloadNewVersion ) )
                                     {
-                                        Stage = GameUpdateStage.Failed;
-                                        return;
-                                    }
-                                    else
-                                    {
-                                        if( !Installer.IsGameInstalled( m_gameTitle, fallbackVersion ) &&
-                                            !DownloadAndInstall( gameVersion, null, false ) )
+                                        if( DownloadAndInstall( latestVersion, latestVersionDownloadURL, true ) )
                                         {
-                                            Stage = GameUpdateStage.Failed;
-                                            return;
+                                            launchVersion = latestVersion;
                                         }
                                         else
                                         {
-                                            gameVersion = fallbackVersion;
+                                            if( TryCancel() )
+                                            {
+                                                return;
+                                            }
+                                            if( !fallbackAvailable )
+                                            {
+                                                Fail();
+                                                return;
+                                            }
+                                            else if( !ShowPrompt( GameUpdatePrompt.LaunchOldVersion ) )
+                                            {
+                                                Finish();
+                                                return;
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // Launch the game
-                    if( !Launch( gameVersion ) )
-                    {
-                        return;
-                    }
+                        // Try one of the fallback methods
+                        if( launchVersion == null )
+                        {
+                            if( latestInstalledVersion != null )
+                            {
+                                launchVersion = latestInstalledVersion;
+                            }
+                            else if( embeddedGameVersion != null )
+                            {
+                                if( ExtractAndInstall() )
+                                {
+                                    launchVersion = embeddedGameVersion;
+                                }
+                                else
+                                {
+                                    FailOrCancel();
+                                    return;
+                                }
+                            }
+                            else
+                            {
+                                Fail();
+                                return;
+                            }
+                        }
 
-                    // Finish
-                    Stage = GameUpdateStage.Finished;
+                        // Try to run it
+                        if( !Launch( launchVersion ) )
+                        {
+                            FailOrCancel();
+                            return;
+                        }
+
+                        // Finish
+                        Finish();
+                    }
                 } );
             }
         }

@@ -56,12 +56,12 @@
     <Compile Include="Launcher\Util\ProgressStream.cs" />
     <Compile Include="Launcher\Util\Language.cs" />
     <Compile Include="Launcher\Interface\GTK\GTKInterface.cs" />
-    <Compile Include="Launcher\Interface\Console\ConsoleInterface.cs" />
     <Compile Include="Launcher\Interface\GTK\UpdateWindow.cs" />
     <Compile Include="Launcher\Main\GameUpdateStage.cs" />
     <Compile Include="Launcher\Main\GameUpdatePrompt.cs" />
     <Compile Include="Launcher\Main\GameUpdater.cs" />
     <Compile Include="Launcher\Main\GameLauncher.cs" />
+    <Compile Include="Launcher\Main\ICancellable.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -72,7 +72,6 @@
     <Folder Include="Resources\" />
     <Folder Include="Launcher\Interface\" />
     <Folder Include="Launcher\Interface\GTK\" />
-    <Folder Include="Launcher\Interface\Console\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

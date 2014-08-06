@@ -107,7 +107,7 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool GetSpecifiedVersionInfo( RSSFile rssFile, string gameTitle, string gameVersion, out string o_gameDescription, out string o_versionDownloadURL, out string o_versionDescription, out bool o_versionIsNewest )
+        public static bool GetSpecificVersionInfo( RSSFile rssFile, string gameTitle, string gameVersion, out string o_gameDescription, out string o_versionDownloadURL, out string o_versionDescription, out bool o_versionIsNewest )
         {
             // Find a matching title
             foreach( var channel in rssFile.Channels )
@@ -166,6 +166,19 @@ namespace Dan200.Launcher.Main
                 o_gameURL = default( string );
                 return false;
             }
+        }
+
+        public static string GetEmbeddedGameVersion( string gameTitle )
+        {
+            string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
+            if( GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
+            {
+                if( embeddedGameTitle == gameTitle )
+                {
+                    return embeddedGameVersion;
+                }
+            }
+            return null;
         }
 
         public static bool ExtractEmbeddedGame( ProgressDelegate listener )

@@ -30,8 +30,9 @@ namespace Dan200.Launcher.Interface.GTK
             var stage = m_updater.Stage;
             Application.Invoke( delegate
             {
-                System.Console.WriteLine( stage.ToString() );
-                this.Title = stage.GetStatus( Program.Language );
+                string status = stage.GetStatus( Program.Language );
+                System.Console.WriteLine( status );
+                this.Title = status;
                 if( stage == GameUpdateStage.Finished || stage == GameUpdateStage.Cancelled )
                 {
                     Application.Quit();
