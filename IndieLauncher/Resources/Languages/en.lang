@@ -1,0 +1,17 @@
+// en Translations
+meta.english_language_name=English
+meta.native_language_name=English
+meta.translator_name=Daniel Ratcliffe
+meta.translator_twitter=@DanTwoHundred
+meta.parent_language=debug
+status.checking=Checking for Updates
+status.extracting=Extracting Updates
+status.downloading=Downloading Updates
+status.installing=Installing Updates
+status.launching=Launching Game
+status.complete=Update Complete
+status.cancelled=Update Cancelled
+status.failed=Update Failed
+status.unknown=Please Wait
+prompt.download_new_version=A new version of {0} is available, would you like to download it?
+prompt.launch_old_version={0} failed to update, would you like to run the previous version?

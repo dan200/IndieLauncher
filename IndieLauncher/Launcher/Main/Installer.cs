@@ -4,6 +4,7 @@ using Ionic.Zip;
 using System.Net;
 using System.Reflection;
 using Dan200.Launcher.Util;
+using Dan200.Launcher.RSS;
 
 namespace Dan200.Launcher.Main
 {
@@ -51,6 +52,90 @@ namespace Dan200.Launcher.Main
             return File.Exists( downloadPath );
         }
 
+        public static string GetLatestInstalledVersion( string gameTitle )
+        {
+            var gamePath = Installer.GetBasePath( gameTitle );
+            if( File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+            {
+                string gameVersion = File.ReadAllText( Path.Combine( gamePath, "LatestVersion.txt" ) ).Trim();
+                if( IsGameInstalled( gameTitle, gameVersion ) )
+                {
+                    return gameVersion;
+                }
+            }
+            return null;
+        }
+
+        public static string RecordLatestInstalledVersion( string gameTitle, string gameVersion, bool overwrite )
+        {
+            var gamePath = Installer.GetBasePath( gameTitle );
+            if( overwrite || !File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+            {
+                File.WriteAllText( Path.Combine( gamePath, "LatestVersion.txt" ), gameVersion );
+            }
+            return null;
+        }
+
+        public static bool GetLatestVersionInfo( RSSFile rssFile, string gameTitle, out string o_gameVersion, out string o_gameDescription, out string o_versionDownloadURL, out string o_versionDescription, out bool o_versionIsNewest )
+        {
+            // Find a matching title
+            foreach( var channel in rssFile.Channels )
+            {
+                if( channel.Title == gameTitle )
+                {
+                    // Find a matching version
+                    for( int i=0; i<channel.Entries.Count; ++i )
+                    {
+                        var entry = channel.Entries[ i ];
+                        if( entry.Title != null )
+                        {
+                            o_gameVersion = entry.Title;
+                            o_gameDescription = (channel.Description != null) ? channel.Description : channel.Title;
+                            o_versionDownloadURL = entry.Link;
+                            o_versionDescription = entry.Description;
+                            o_versionIsNewest = (i == 0);
+                            return true;
+                        }
+                    }
+                }
+            }
+            o_gameVersion = null;
+            o_gameDescription = null;
+            o_versionDownloadURL = null;
+            o_versionDescription = null;
+            o_versionIsNewest = false;
+            return false;
+        }
+
+        public static bool GetSpecifiedVersionInfo( RSSFile rssFile, string gameTitle, string gameVersion, out string o_gameDescription, out string o_versionDownloadURL, out string o_versionDescription, out bool o_versionIsNewest )
+        {
+            // Find a matching title
+            foreach( var channel in rssFile.Channels )
+            {
+                if( channel.Title == gameTitle )
+                {
+                    // Find a matching version
+                    for( int i=0; i<channel.Entries.Count; ++i )
+                    {
+                        var entry = channel.Entries[ i ];
+                        if( entry.Title == gameVersion )
+                        {
+                            o_gameDescription = (channel.Description != null) ? channel.Description : channel.Title;
+                            o_versionDownloadURL = entry.Link;
+                            o_versionDescription = entry.Description;
+                            o_versionIsNewest = (i == 0);
+                            return true;
+                        }
+                    }
+                }
+            }
+            o_gameDescription = null;
+            o_versionDownloadURL = null;
+            o_versionDescription = null;
+            o_versionIsNewest = false;
+            return false;
+        }
+
         public static bool GetEmbeddedGame( out string o_gameTitle, out string o_gameVersion, out string o_gameURL )
         {
             try
@@ -83,7 +168,7 @@ namespace Dan200.Launcher.Main
             }
         }
 
-        public static bool ExtractEmbeddedGame()
+        public static bool ExtractEmbeddedGame( ProgressDelegate listener )
         {
             string gameTitle, gameVersion, gameURL;
             if( GetEmbeddedGame( out gameTitle, out gameVersion, out gameURL ) && gameVersion != null )
@@ -102,13 +187,16 @@ namespace Dan200.Launcher.Main
                         }
 
                         // Create new download
-                        Directory.CreateDirectory( Path.GetDirectoryName( downloadPath ) );
-                        using( var output = File.OpenWrite( downloadPath ) )
+                        using( var progressStream = new ProgressStream( stream, listener ) )
                         {
-                            stream.CopyTo( output );
-                            output.Close();
+                            Directory.CreateDirectory( Path.GetDirectoryName( downloadPath ) );
+                            using( var output = File.OpenWrite( downloadPath ) )
+                            {
+                                progressStream.CopyTo( output );
+                                output.Close();
+                            }
+                            progressStream.Close();
                         }
-                        stream.Close();
                         return true;
                     }
                     return false;
@@ -127,6 +215,11 @@ namespace Dan200.Launcher.Main
 
         public static bool DownloadGame( string gameTitle, string gameVersion, string url, ProgressDelegate listener )
         {
+            if( url == null )
+            {
+                return false;
+            }
+
             var downloadPath = GetDownloadPath( gameTitle, gameVersion );
             try
             {

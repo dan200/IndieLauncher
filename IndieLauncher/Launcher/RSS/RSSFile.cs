@@ -4,6 +4,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Dan200.Launcher.Util;
 
 namespace Dan200.Launcher.RSS
 {
@@ -11,7 +12,7 @@ namespace Dan200.Launcher.RSS
 	{
         public readonly IList<RSSChannel> Channels;
 
-        public static RSSFile Download( string url )
+        public static RSSFile Download( string url, ProgressDelegate listener )
         {
             try
             {
@@ -19,7 +20,7 @@ namespace Dan200.Launcher.RSS
                 request.Timeout = 10000;
                 using( var response = request.GetResponse() )
                 {
-                    using( var stream = response.GetResponseStream() )
+                    using( var stream = new ProgressStream( response.GetResponseStream(), listener ) )
                     {
                         return new RSSFile( stream );
                     }

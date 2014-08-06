@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Dan200.Launcher.Main
 {
-    public static class Launcher
+    public static class GameLauncher
     {
         public static bool LaunchGame( string gameTitle, string gameVersion )
         {
@@ -82,7 +82,8 @@ namespace Dan200.Launcher.Main
                 else
                 {
                     // If no exe was found, just open the folder
-                    Process.Start( gamePath );
+                    //Process.Start( gamePath );
+                    return true;
                 }
                 return true;
             }

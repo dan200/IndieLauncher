@@ -36,11 +36,9 @@
       <HintPath>Ionic.Zip.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="MonoMac">
-      <HintPath>MonoMac.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Drawing" />
+    <Reference Include="gdk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="gtk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -52,14 +50,16 @@
     <Compile Include="Launcher\Util\ProgramArguments.cs" />
     <Compile Include="Launcher\RSS\RSSChannel.cs" />
     <Compile Include="Launcher\Util\EmbeddedAssembly.cs" />
-    <Compile Include="Launcher\Main\Launcher.cs" />
     <Compile Include="Launcher\Main\Installer.cs" />
-    <Compile Include="Launcher\GUI\Dialogs.cs" />
-    <Compile Include="Launcher\GUI\ConsoleDialogs.cs" />
-    <Compile Include="Launcher\GUI\WinFormsDialogs.cs" />
-    <Compile Include="Launcher\GUI\MonoMacDialogs.cs" />
     <Compile Include="Launcher\Util\ProgressStream.cs" />
-    <Compile Include="Launcher\GUI\IProgressWindow.cs" />
+    <Compile Include="Launcher\Util\Language.cs" />
+    <Compile Include="Launcher\Interface\GTK\GTKInterface.cs" />
+    <Compile Include="Launcher\Interface\Console\ConsoleInterface.cs" />
+    <Compile Include="Launcher\Interface\GTK\UpdateWindow.cs" />
+    <Compile Include="Launcher\Main\GameUpdateStage.cs" />
+    <Compile Include="Launcher\Main\GameUpdatePrompt.cs" />
+    <Compile Include="Launcher\Main\GameUpdater.cs" />
+    <Compile Include="Launcher\Main\GameLauncher.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -67,7 +67,10 @@
     <Folder Include="Launcher\Main\" />
     <Folder Include="Launcher\RSS\" />
     <Folder Include="Launcher\Util\" />
-    <Folder Include="Launcher\GUI\" />
+    <Folder Include="Resources\" />
+    <Folder Include="Launcher\Interface\" />
+    <Folder Include="Launcher\Interface\GTK\" />
+    <Folder Include="Launcher\Interface\Console\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>
@@ -86,5 +89,7 @@
     <EmbeddedResource Include="EmbeddedGame.txt" />
     <EmbeddedResource Include="EmbeddedGame.zip" />
     <EmbeddedResource Include="MonoMac.dll" />
+    <EmbeddedResource Include="Resources\Languages\en.lang" />
+    <EmbeddedResource Include="Resources\Languages\debug.lang" />
   </ItemGroup>
 </Project>

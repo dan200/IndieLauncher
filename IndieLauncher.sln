@@ -11,6 +11,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{56B7CE84-DCA3-4028-A00C-FC752047AEDC}"
 	ProjectSection(SolutionItems) = preProject
 		Deploy.sh = Deploy.sh
+		UpdateLoc.sh = UpdateLoc.sh
 	EndProjectSection
 EndProject
 Global

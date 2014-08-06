@@ -7,7 +7,9 @@ using Ionic.Zip;
 using System.Runtime.InteropServices;
 using Dan200.Launcher.Util;
 using System.Reflection;
-using Dan200.Launcher.GUI;
+using System.Globalization;
+using Dan200.Launcher.Interface.Console;
+using Dan200.Launcher.Interface.GTK;
 
 namespace Dan200.Launcher.Main
 {
@@ -23,6 +25,12 @@ namespace Dan200.Launcher.Main
         }
 
         public static ProgramArguments Arguments
+        {
+            get;
+            private set;
+        }
+
+        public static Language Language
         {
             get;
             private set;
@@ -132,9 +140,8 @@ namespace Dan200.Launcher.Main
             if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
             {
                 Console.Write( "Downloading update... " );
-                var progressWindow = Dialogs.CreateDownloadWindow( gameDescription );
                 if( Installer.DownloadGame( gameTitle, gameVersion, downloadURL, delegate( int progress ) {
-                    progressWindow.SetProgress( progress );
+                    Console.Write( "{0}%", progress );
                 } ) )
                 {
                     Console.WriteLine( "OK" );
@@ -187,16 +194,6 @@ namespace Dan200.Launcher.Main
             }
         }
 
-        public static string GetLatestVersion( string gameTitle )
-        {
-            var gamePath = Installer.GetBasePath( gameTitle );
-            if( File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
-            {
-                return File.ReadAllText( Path.Combine( gamePath, "LatestVersion.txt" ) ).Trim();
-            }
-            return null;
-        }
-
         private static bool InstallEmbeddedGame()
         {
             // Extract the embedded game
@@ -209,7 +206,9 @@ namespace Dan200.Launcher.Main
                     if( !Installer.IsGameDownloaded( gameTitle, gameVersion ) )
                     {                   
                         Console.Write( "Extracting embedded game... " );
-                        if( !Installer.ExtractEmbeddedGame() )
+                        if( !Installer.ExtractEmbeddedGame( delegate( int progress ) {
+                            Console.Write( "{0}%", progress );
+                        } ) )
                         {
                             Console.WriteLine( "Failed" );
                             return false;
@@ -239,13 +238,25 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
+        public static Language DetermineLanguage()
+        {
+            Dan200.Launcher.Util.Language.LoadAll();
+            return Dan200.Launcher.Util.Language.GetMostSimilarTo(
+                CultureInfo.CurrentUICulture.Name.Replace( '-', '_' )
+            );
+        }
+
 		public static void Main( string[] args )
 		{
             // Init
             SetupEmbeddedAssemblies();
             Platform = DeterminePlatform();
             Arguments = new ProgramArguments( args );
-            Dialogs.Init();
+            Language = DetermineLanguage();
+
+            // Run UI
+            GTKInterface.Run();
+            return;
 
             // Install the embedded game
             InstallEmbeddedGame();
@@ -279,7 +290,7 @@ namespace Dan200.Launcher.Main
             if( gameVersion != null && Installer.IsGameInstalled( gameTitle, gameVersion ) )
             {
                 Console.Write( "Launching game... " );
-                if( Launcher.LaunchGame( gameTitle, gameVersion ) )
+                if( GameLauncher.LaunchGame( gameTitle, gameVersion ) )
                 {
                     Console.WriteLine( "OK" );
                 }
@@ -295,7 +306,9 @@ namespace Dan200.Launcher.Main
             {
                 // Download the RSS file
                 Console.Write( "Checking for updates... " );
-                var rssFile = RSSFile.Download( updateURL );
+                var rssFile = RSSFile.Download( updateURL, delegate(int percentage) {
+                    Console.Write( "{0}%", percentage );
+                } );
 
                 // Extract information from it
                 bool gameVersionIsStrict = (gameVersion != null);
@@ -308,14 +321,14 @@ namespace Dan200.Launcher.Main
 
                     // Determine whether to download an update
                     bool downloadUpdate = false;
-                    var latestVersion = GetLatestVersion( gameTitle );
+                    var latestVersion = Installer.GetLatestInstalledVersion( gameTitle );
                     if( gameVersionIsStrict || latestVersion == null )
                     {
                         downloadUpdate = !Installer.IsGameInstalled( gameTitle, gameVersion );
                     }
                     else
                     {
-                        downloadUpdate = !Installer.IsGameInstalled( gameTitle, gameVersion ) && Dialogs.PromptForUpdate( gameDescription );
+                        downloadUpdate = !Installer.IsGameInstalled( gameTitle, gameVersion ) && false; /*Dialogs.PromptForUpdate( gameDescription );*/
                     }
 
                     // Download the update
@@ -340,7 +353,7 @@ namespace Dan200.Launcher.Main
                 // Determine the version to run
                 if( gameVersion == null )
                 {
-                    gameVersion = GetLatestVersion( gameTitle );
+                    gameVersion = Installer.GetLatestInstalledVersion( gameTitle );
                     if( gameVersion == null || !Installer.IsGameInstalled( gameTitle, gameVersion ) )
                     {
                         Console.WriteLine( "Unable to determine version to run." );
@@ -352,7 +365,7 @@ namespace Dan200.Launcher.Main
                 if( Installer.IsGameInstalled( gameTitle, gameVersion ) )
                 {
                     Console.Write( "Launching game... " );
-                    if( Launcher.LaunchGame( gameTitle, gameVersion ) )
+                    if( GameLauncher.LaunchGame( gameTitle, gameVersion ) )
                     {
                         Console.WriteLine( "OK" );
                     }
