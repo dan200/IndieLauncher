@@ -7,7 +7,10 @@
 	<item>
 	  <title>1.1</title>
 	  <link>https://raw.githubusercontent.com/dan200/IndieLauncher/master/ExampleGame/ExampleGame1.1.zip</link>
-	  <description>Added new features.</description>
+	  <description xml:space="preserve">
+	  	Added new features.
+		Fixed some bugs.
+	  </description>
 	</item>
 	<item>
       <title>1.0</title>
