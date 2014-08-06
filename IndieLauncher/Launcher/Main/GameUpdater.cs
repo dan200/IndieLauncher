@@ -8,6 +8,7 @@ namespace Dan200.Launcher.Main
     public class GameUpdater : ICancellable
     {
         private string m_gameTitle;
+        private string m_gameDescription;
         private string m_optionalGameVersion;
         private string m_optionalUpdateURL;
 
@@ -100,6 +101,24 @@ namespace Dan200.Launcher.Main
             }
         }
 
+        public string GameDescription
+        {
+            get
+            {
+                lock( this )
+                {
+                    return m_gameDescription;
+                }
+            }
+            private set
+            {
+                lock( this )
+                {
+                    m_gameDescription = value;
+                }
+            }
+        }
+
         public event EventHandler StageChanged;
         public event EventHandler ProgressChanged;
         public event EventHandler PromptChanged;
@@ -107,6 +126,7 @@ namespace Dan200.Launcher.Main
         public GameUpdater( string gameTitle, string optionalGameVersion, string optionalUpdateURL )
         {
             m_gameTitle = gameTitle;
+            m_gameDescription = gameTitle;
             m_optionalGameVersion = optionalGameVersion;
             m_optionalUpdateURL = optionalUpdateURL;
 
@@ -287,6 +307,7 @@ namespace Dan200.Launcher.Main
                 o_isNewest = false;
                 return false;
             }
+            GameDescription = gameDescription;
             return true;
         }
 
@@ -311,6 +332,7 @@ namespace Dan200.Launcher.Main
                 o_downloadURL = null;
                 return false;
             }
+            GameDescription = gameDescription;
             return true;
         }
 

@@ -54,6 +54,7 @@ namespace Dan200.Launcher.Interface.GTK
         private void OnPromptChanged( object sender, EventArgs e )
         {
             var prompt = m_updater.CurrentPrompt;
+            var description = m_updater.GameDescription;
             Application.Invoke( delegate
             {
                 var dialog = new MessageDialog(
@@ -61,7 +62,7 @@ namespace Dan200.Launcher.Interface.GTK
                     DialogFlags.Modal,
                     MessageType.Question,
                     ButtonsType.YesNo,
-                    prompt.GetQuestion( Program.Language, "Example Game" )
+                    prompt.GetQuestion( Program.Language, description )
                 );
                 dialog.Show();
                 int response = dialog.Run();

@@ -8,7 +8,6 @@ using System.Runtime.InteropServices;
 using Dan200.Launcher.Util;
 using System.Reflection;
 using System.Globalization;
-using Dan200.Launcher.Interface.Console;
 using Dan200.Launcher.Interface.GTK;
 
 namespace Dan200.Launcher.Main
