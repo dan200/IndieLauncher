@@ -49,7 +49,17 @@ namespace Dan200.Launcher.Interface.WinForms
             this.BeginInvoke( (Action)delegate
             {
                 int percentage = (int)(progress * 100.0);
-                this.Text = stage.GetStatus( Program.Language ) + " (" + percentage + "%)";
+                if( stage == GameUpdateStage.NotStarted ||
+                    stage == GameUpdateStage.Finished ||
+                    stage == GameUpdateStage.Cancelled ||
+                    stage == GameUpdateStage.Failed )
+                {
+                    this.Text = stage.GetStatus( Program.Language );
+                }
+                else
+                {
+                    this.Text = stage.GetStatus( Program.Language ) + " (" + percentage + "%)";
+                }
                 m_progressBar.Value = percentage;
             } );
         }
