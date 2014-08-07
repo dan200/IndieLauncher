@@ -115,12 +115,26 @@ namespace Dan200.Launcher.Main
             Arguments = new ProgramArguments( args );
             Language = DetermineLanguage();
 
+            // Determine UI to run
+            string gui = Arguments.GetString( "gui" );
+            if( gui == null )
+            {
+                if( Platform == Platform.Windows )
+                {
+                    gui = "winforms";
+                }
+                else
+                {
+                    gui = "gtk";
+                }
+            }
+
             // Run UI
-            if( Platform == Platform.Windows )
+            if( gui == "winforms" )
             {
                 WinFormsInterface.Run();
             }
-            else
+            else if( gui == "gtk" )
             {
                 GTKInterface.Run();
             }
