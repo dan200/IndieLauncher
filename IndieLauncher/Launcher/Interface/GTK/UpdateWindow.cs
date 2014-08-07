@@ -33,7 +33,8 @@ namespace Dan200.Launcher.Interface.GTK
                 string status = stage.GetStatus( Program.Language );
                 System.Console.WriteLine( status );
                 this.Title = status;
-                if( stage == GameUpdateStage.Finished || stage == GameUpdateStage.Cancelled )
+                if( stage == GameUpdateStage.Finished ||
+                    stage == GameUpdateStage.Cancelled )
                 {
                     Application.Quit();
                 }
@@ -57,6 +58,7 @@ namespace Dan200.Launcher.Interface.GTK
             var description = m_updater.GameDescription;
             Application.Invoke( delegate
             {
+                // Show message dialog
                 var dialog = new MessageDialog(
                     this,
                     DialogFlags.Modal,
@@ -68,11 +70,17 @@ namespace Dan200.Launcher.Interface.GTK
                 int response = dialog.Run();
                 dialog.Destroy();
 
-                if( response == (int)ResponseType.Close || response == (int)ResponseType.DeleteEvent )
+                // Inform the updater
+                if( response == (int)ResponseType.Close ||
+                    response == (int)ResponseType.DeleteEvent )
                 {
                     m_updater.Cancel();
+                    m_updater.AnswerPrompt( false );
                 }
-                m_updater.AnswerPrompt( response == (int)ResponseType.Yes );
+                else
+                {
+                    m_updater.AnswerPrompt( response == (int)ResponseType.Yes );
+                }
             } );
         }
 
