@@ -1,7 +1,9 @@
 Indie Launcher
 ==============
 
-Indie Launcher is a customisable, unobtrusive Launcher application that you can use to transparently provide automatic updates for your Indie Game. Updates are published by editing an RSS file on your website, and are automatically detected by the launcher when your users try to run your game. There's no system tray apps, background processes or login screens, just an small process that checks for updates, downloads them, then launches your game and gets out of the way.
+Indie Launcher is a customisable, unobtrusive Launcher application that you can use to transparently provide automatic updates for your Indie Game. Updates are published by editing an RSS file on your website, and are automatically detected by the launcher when your users try to run your game.
+
+There's no system tray apps, background processes or login screens, just an small process that checks for updates to your game, downloads them, then launches your game and gets out of the way.
 
 Screenshots
 ===========
@@ -12,7 +14,7 @@ Screenshots
 Creating a Launcher for your game
 =================================
 
-The code in this repository provides a launcher that downloads the example game hosted [here](https://github.com/dan200/IndieLauncherExampleGame). To customise it into a launcher that will update and launch your game, you'll need to make some changes:
+The code in this repository provides a launcher that downloads the example game hosted [here](https://github.com/dan200/IndieLauncherExampleGame). To customise it into a launcher that will update and launch *your* game, you'll need to make some small changes:
 
 1. Take a look at the [Example Game RSS file](https://github.com/dan200/IndieLauncherExampleGame/blob/master/ExampleGame.xml), customise it with the download links for your game, and host it somewhere online. Each entry in the RSS file represents a version of the game, and the newer versions go at the top.
 
