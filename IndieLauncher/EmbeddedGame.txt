@@ -5,4 +5,4 @@
 // url: Optional. The URL of the feed to check for updates, omit this if you've embedded a game and don't want to provide updates.
 game=ExampleGame 
 version=1.0
-url=https://raw.githubusercontent.com/dan200/IndieLauncher/master/ExampleGame/ExampleGame.xml
+url=https://raw.githubusercontent.com/dan200/IndieLauncherExampleGame/master/ExampleGame.xml
