@@ -14,10 +14,10 @@ namespace Dan200.Launcher.Interface.GTK
             // Determine which game and which version to run
             string gameTitle, gameVersion, updateURL;
             string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
-            if( Installer.GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
+            if( Installer.GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
             {
                 // Run game from embedded game info
-                gameTitle = embeddedGameTitle;
+                gameTitle = null;//embeddedGameTitle;
                 gameVersion = Program.Arguments.GetString( "version" );
                 updateURL = embeddedGameURL;
             }
@@ -34,9 +34,13 @@ namespace Dan200.Launcher.Interface.GTK
             {
                 ShowUpdateWindow( gameTitle, gameVersion, updateURL );
             }
+            else if( Installer.GetInstalledGames().Length > 0 )
+            {
+                ShowGameListWindow();
+            }
             else
             {
-                ShowErrorWindow( "No game specified. Exiting." );
+                ShowErrorWindow( "No games installed. Exiting." );
             }
         }
 
@@ -44,6 +48,13 @@ namespace Dan200.Launcher.Interface.GTK
         {
             var updateWindow = new UpdateWindow( gameTitle, optionalGameVersion, optionalUpdateURL );
             updateWindow.ShowAll();
+            Application.Run();
+        }
+
+        public static void ShowGameListWindow()
+        {
+            var gameListWindow = new GameListWindow();
+            gameListWindow.ShowAll();
             Application.Run();
         }
 

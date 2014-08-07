@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Ionic.Zip;
 using System.Net;
 using System.Reflection;
@@ -10,7 +11,7 @@ namespace Dan200.Launcher.Main
 {
     public static class Installer
     {
-        public static string GetBasePath( string gameTitle )
+        public static string GetBasePath()
         {
             string basePath;
             if( Program.Platform == Platform.OSX )
@@ -25,6 +26,12 @@ namespace Dan200.Launcher.Main
                 basePath = Environment.GetFolderPath( Environment.SpecialFolder.ApplicationData );
             }
             basePath = Path.Combine( basePath, "IndieLauncher" );
+            return basePath;
+        }
+
+        public static string GetBasePath( string gameTitle )
+        {
+            string basePath = GetBasePath();
             basePath = Path.Combine( basePath, "Games" );
             basePath = Path.Combine( basePath, gameTitle );
             return basePath;
@@ -54,10 +61,12 @@ namespace Dan200.Launcher.Main
 
         public static string GetLatestInstalledVersion( string gameTitle )
         {
-            var gamePath = Installer.GetBasePath( gameTitle );
-            if( File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+            var versionPath = Installer.GetBasePath( gameTitle );
+            versionPath = Path.Combine( versionPath, "Versions" );
+            versionPath = Path.Combine( versionPath, "Latest.txt" );
+            if( File.Exists( versionPath ) )
             {
-                string gameVersion = File.ReadAllText( Path.Combine( gamePath, "LatestVersion.txt" ) ).Trim();
+                string gameVersion = File.ReadAllText( versionPath ).Trim();
                 if( IsGameInstalled( gameTitle, gameVersion ) )
                 {
                     return gameVersion;
@@ -68,10 +77,12 @@ namespace Dan200.Launcher.Main
 
         public static string RecordLatestInstalledVersion( string gameTitle, string gameVersion, bool overwrite )
         {
-            var gamePath = Installer.GetBasePath( gameTitle );
-            if( overwrite || !File.Exists( Path.Combine( gamePath, "LatestVersion.txt" ) ) )
+            var versionPath = Installer.GetBasePath( gameTitle );
+            versionPath = Path.Combine( versionPath, "Versions" );
+            versionPath = Path.Combine( versionPath, "Latest.txt" );
+            if( overwrite || !File.Exists( versionPath ) )
             {
-                File.WriteAllText( Path.Combine( gamePath, "LatestVersion.txt" ), gameVersion );
+                File.WriteAllText( versionPath, gameVersion );
             }
             return null;
         }
@@ -136,7 +147,7 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool GetEmbeddedGame( out string o_gameTitle, out string o_gameVersion, out string o_gameURL )
+        public static bool GetEmbeddedGameInfo( out string o_gameTitle, out string o_gameVersion, out string o_gameURL )
         {
             try
             {
@@ -171,7 +182,7 @@ namespace Dan200.Launcher.Main
         public static string GetEmbeddedGameVersion( string gameTitle )
         {
             string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
-            if( GetEmbeddedGame( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
+            if( GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
             {
                 if( embeddedGameTitle == gameTitle )
                 {
@@ -184,7 +195,7 @@ namespace Dan200.Launcher.Main
         public static bool ExtractEmbeddedGame( ProgressDelegate listener )
         {
             string gameTitle, gameVersion, gameURL;
-            if( GetEmbeddedGame( out gameTitle, out gameVersion, out gameURL ) && gameVersion != null )
+            if( GetEmbeddedGameInfo( out gameTitle, out gameVersion, out gameURL ) && gameVersion != null )
             {
                 var downloadPath = GetDownloadPath( gameTitle, gameVersion );
                 try
@@ -282,6 +293,13 @@ namespace Dan200.Launcher.Main
         {
             var installPath = GetInstallPath( gameTitle, gameVersion );
             return Directory.Exists( installPath );
+        }
+
+        public static string[] GetInstalledGames()
+        {
+            var gamesPath = GetBasePath();
+            gamesPath = Path.Combine( gamesPath, "Games" );
+            return Directory.GetDirectories( gamesPath ).Select( p => Path.GetFileName(p) ).ToArray();
         }
 
         public static bool InstallGame( string gameTitle, string gameVersion )
