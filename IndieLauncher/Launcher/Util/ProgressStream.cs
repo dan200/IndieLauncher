@@ -12,6 +12,7 @@ namespace Dan200.Launcher.Util
         private ProgressDelegate m_listener;
         private ICancellable m_cancelObject;
 
+        private long m_length;
         private long m_position;
         private int m_lastProgress;
 
@@ -61,11 +62,12 @@ namespace Dan200.Launcher.Util
             }
         }
 
-        public ProgressStream( Stream innerStream, ProgressDelegate listener, ICancellable cancelObject )
+        public ProgressStream( Stream innerStream, long lengthHint, ProgressDelegate listener, ICancellable cancelObject )
         {
             m_innerStream = innerStream;
             m_listener = listener;
             m_cancelObject = cancelObject;
+            m_length = lengthHint;
 
             m_position = 0;
             m_lastProgress = -1;
@@ -129,11 +131,20 @@ namespace Dan200.Launcher.Util
 
         private void EmitProgress()
         {
-            int percentage = (int)((m_position * 100) / Length);
-            if( percentage != m_lastProgress )
+            long length = m_length;
+            if( length < 0 && m_innerStream.CanSeek )
             {
-                m_listener.Invoke( percentage );
-                m_lastProgress = percentage;
+                length = m_innerStream.Length;
+            }
+
+            if( length > 0 )
+            {
+                int percentage = Math.Min( (int)((m_position * 100) / Length), 100 );
+                if( percentage != m_lastProgress )
+                {
+                    m_listener.Invoke( percentage );
+                    m_lastProgress = percentage;
+                }
             }
         }
 

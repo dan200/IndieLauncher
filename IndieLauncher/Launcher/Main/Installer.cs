@@ -208,7 +208,7 @@ namespace Dan200.Launcher.Main
                         {
                             try
                             {
-                                using( var progressStream = new ProgressStream( stream, listener, cancelObject ) )
+                                using( var progressStream = new ProgressStream( stream, -1, listener, cancelObject ) )
                                 {
                                     // Delete old download
                                     if( File.Exists( downloadPath ) )
@@ -273,7 +273,7 @@ namespace Dan200.Launcher.Main
                 request.Timeout = 15000;
                 using( var response = request.GetResponse() )
                 {
-                    using( var stream = new ProgressStream( response.GetResponseStream(), listener, cancelObject ) )
+                    using( var stream = new ProgressStream( response.GetResponseStream(), response.ContentLength, listener, cancelObject ) )
                     {
                         try
                         {
@@ -373,7 +373,7 @@ namespace Dan200.Launcher.Main
                                 {
                                     try
                                     {
-                                        using( var reader = new ProgressStream( entry.OpenReader(), delegate {
+                                        using( var reader = new ProgressStream( entry.OpenReader(), -1, delegate {
                                             // TODO: Emit progress during installation of large individual files?
                                         }, cancelObject ) )
                                         {
