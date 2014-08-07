@@ -17,7 +17,7 @@ namespace Dan200.Launcher.RSS
             try
             {
                 var request = HttpWebRequest.Create( url );
-                request.Timeout = 10000;
+                request.Timeout = 15000;
                 using( var response = request.GetResponse() )
                 {
                     using( var stream = new ProgressStream( response.GetResponseStream(), listener, cancelObject ) )
