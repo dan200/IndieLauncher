@@ -69,8 +69,6 @@ namespace Dan200.Launcher.Util
 
             m_position = 0;
             m_lastProgress = -1;
-
-            CheckCancel();
             EmitProgress();
         }
 

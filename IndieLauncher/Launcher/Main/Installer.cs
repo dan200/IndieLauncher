@@ -373,7 +373,9 @@ namespace Dan200.Launcher.Main
                                 {
                                     try
                                     {
-                                        using( var reader = entry.OpenReader() )
+                                        using( var reader = new ProgressStream( entry.OpenReader(), delegate {
+                                            // TODO: Emit progress during installation of large individual files?
+                                        }, cancelObject ) )
                                         {
                                             try
                                             {
