@@ -1,9 +1,9 @@
-Indie Launcher
-==============
+IndieLauncher
+=============
 
-Indie Launcher is a customisable, unobtrusive Launcher application that you can use to transparently provide automatic updates for your Indie Game. Updates are published by editing an RSS file on your website, and are automatically detected by the launcher when your users try to run your game.
+IndieLauncher is a customisable, unobtrusive Launcher application that you can use to transparently provide automatic updates for your Indie Game. Updates are published by editing an RSS file on your website, and are automatically detected by the launcher when users try to run your game.
 
-There's no system tray apps, background processes or login screens, just an small process that checks for updates to your game, downloads them, then launches your game and gets out of the way.
+There's no system tray apps, background processes or login screens, just an small program that checks for updates to your game, downloads them, then launches your game and gets out of the way.
 
 Screenshots
 ===========
