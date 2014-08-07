@@ -302,7 +302,7 @@ namespace Dan200.Launcher.Main
             return Directory.GetDirectories( gamesPath ).Select( p => Path.GetFileName(p) ).ToArray();
         }
 
-        public static bool InstallGame( string gameTitle, string gameVersion )
+        public static bool InstallGame( string gameTitle, string gameVersion, ProgressDelegate listener )
         {
             var downloadPath = GetDownloadPath( gameTitle, gameVersion );
             var installPath = GetInstallPath( gameTitle, gameVersion );
@@ -320,8 +320,13 @@ namespace Dan200.Launcher.Main
                         Directory.CreateDirectory( installPath );
 
                         // Extract new install
+                        int totalFiles = zipFile.Entries.Count;
+                        int filesInstalled = 0;
+                        int lastProgress = 0;
+                        listener.Invoke( 0 );
                         foreach( var entry in zipFile.Entries )
                         {
+                            // Extract the file
                             var entryInstallPath = Path.Combine( installPath, entry.FileName );
                             if( entry.IsDirectory )
                             {
@@ -339,6 +344,15 @@ namespace Dan200.Launcher.Main
                                     }
                                     file.Close();
                                 }
+                            }
+
+                            // Notify the progress listener
+                            filesInstalled++;
+                            int progress = (filesInstalled * 100) / totalFiles;
+                            if( progress != lastProgress )
+                            {
+                                listener.Invoke( progress );
+                                lastProgress = progress;
                             }
                         }
                     }

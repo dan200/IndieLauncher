@@ -203,7 +203,9 @@ namespace Dan200.Launcher.Main
             if( !Installer.IsGameInstalled( m_gameTitle, gameVersion ) )
             {
                 Stage = GameUpdateStage.InstallingUpdate;
-                if( !Installer.InstallGame( m_gameTitle, gameVersion ) )
+                if( !Installer.InstallGame( m_gameTitle, gameVersion, delegate( int progress ) {
+                    StageProgress = (double)progress / 100.0;
+                } ) )
                 {
                     return false;
                 }
