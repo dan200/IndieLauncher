@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Dan200.Launcher.Main;
 
 namespace Dan200.Launcher.Util
 {
@@ -9,6 +10,8 @@ namespace Dan200.Launcher.Util
     {
         private Stream m_innerStream;
         private ProgressDelegate m_listener;
+        private ICancellable m_cancelObject;
+
         private long m_position;
         private int m_lastProgress;
 
@@ -58,12 +61,16 @@ namespace Dan200.Launcher.Util
             }
         }
 
-        public ProgressStream( Stream innerStream, ProgressDelegate listener )
+        public ProgressStream( Stream innerStream, ProgressDelegate listener, ICancellable cancelObject )
         {
             m_innerStream = innerStream;
             m_listener = listener;
+            m_cancelObject = cancelObject;
+
             m_position = 0;
             m_lastProgress = -1;
+
+            CheckCancel();
             EmitProgress();
         }
 
@@ -85,8 +92,18 @@ namespace Dan200.Launcher.Util
             m_innerStream.Flush();
         }
 
+        public override int ReadByte()
+        {
+            CheckCancel();
+            var result = m_innerStream.ReadByte();
+            m_position++;
+            EmitProgress();
+            return result;
+        }
+
         public override int Read( byte[] buffer, int offset, int count )
         {
+            CheckCancel();
             var result = m_innerStream.Read( buffer, offset, count );
             m_position += result;
             EmitProgress();
@@ -95,6 +112,7 @@ namespace Dan200.Launcher.Util
 
         public override long Seek( long offset, SeekOrigin origin )
         {
+            CheckCancel();
             var result = m_innerStream.Seek( offset, origin );
             m_position = result;
             EmitProgress();
@@ -118,6 +136,14 @@ namespace Dan200.Launcher.Util
             {
                 m_listener.Invoke( percentage );
                 m_lastProgress = percentage;
+            }
+        }
+
+        private void CheckCancel()
+        {
+            if( m_cancelObject.Cancelled )
+            {
+                throw new IOCancelledException();
             }
         }
     }

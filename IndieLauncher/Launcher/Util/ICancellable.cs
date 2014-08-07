@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Dan200.Launcher.Main
+namespace Dan200.Launcher.Util
 {
     public interface ICancellable
     {

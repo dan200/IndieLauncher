@@ -12,7 +12,7 @@ namespace Dan200.Launcher.RSS
 	{
         public readonly IList<RSSChannel> Channels;
 
-        public static RSSFile Download( string url, ProgressDelegate listener )
+        public static RSSFile Download( string url, ProgressDelegate listener, ICancellable cancelObject )
         {
             try
             {
@@ -20,9 +20,16 @@ namespace Dan200.Launcher.RSS
                 request.Timeout = 10000;
                 using( var response = request.GetResponse() )
                 {
-                    using( var stream = new ProgressStream( response.GetResponseStream(), listener ) )
+                    using( var stream = new ProgressStream( response.GetResponseStream(), listener, cancelObject ) )
                     {
-                        return new RSSFile( stream );
+                        try
+                        {
+                            return new RSSFile( stream );
+                        }
+                        finally
+                        {
+                            stream.Close();
+                        }
                     }
                 }
             }

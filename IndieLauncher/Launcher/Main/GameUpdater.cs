@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Dan200.Launcher.RSS;
+using Dan200.Launcher.Util;
 
 namespace Dan200.Launcher.Main
 {
@@ -165,7 +166,7 @@ namespace Dan200.Launcher.Main
                 Stage = GameUpdateStage.ExtractingUpdate;
                 if( !Installer.ExtractEmbeddedGame( delegate( int progress ) {
                     StageProgress = (double)progress / 100.0;
-                } ) )
+                }, this ) )
                 {
                     return false;
                 }
@@ -185,7 +186,7 @@ namespace Dan200.Launcher.Main
                 Stage = GameUpdateStage.DownloadingUpdate;
                 if( !Installer.DownloadGame( m_gameTitle, gameVersion, downloadURL, delegate( int progress ) {
                     StageProgress = (double)progress / 100.0;
-                } ) )
+                }, this ) )
                 {
                     return false;
                 }
@@ -205,7 +206,7 @@ namespace Dan200.Launcher.Main
                 Stage = GameUpdateStage.InstallingUpdate;
                 if( !Installer.InstallGame( m_gameTitle, gameVersion, delegate( int progress ) {
                     StageProgress = (double)progress / 100.0;
-                } ) )
+                }, this ) )
                 {
                     return false;
                 }
@@ -274,7 +275,7 @@ namespace Dan200.Launcher.Main
             Stage = GameUpdateStage.CheckingForUpdate;
             var rssFile = RSSFile.Download( m_optionalUpdateURL, delegate(int percentage) {
                 StageProgress = (double)percentage / 100.0;
-            } );
+            }, this );
             if( rssFile == null )
             {
                 return null;
@@ -457,8 +458,21 @@ namespace Dan200.Launcher.Main
                                 if( latestVersionDownloadURL != null )
                                 {
                                     bool fallbackAvailable = (latestInstalledVersion != null) || (embeddedGameVersion != null);
-                                    if( !fallbackAvailable || ShowPrompt( GameUpdatePrompt.DownloadNewVersion ) )
+                                    bool userPromptResult = false;
+                                    if( fallbackAvailable )
                                     {
+                                        userPromptResult = ShowPrompt( GameUpdatePrompt.DownloadNewVersion );
+                                        if( TryCancel() )
+                                        {
+                                            return;
+                                        }
+                                    }
+                                    if( !fallbackAvailable || userPromptResult )
+                                    {
+                                        if( TryCancel() )
+                                        {
+                                            return;
+                                        }
                                         if( DownloadAndInstall( latestVersion, latestVersionDownloadURL, true ) )
                                         {
                                             launchVersion = latestVersion;

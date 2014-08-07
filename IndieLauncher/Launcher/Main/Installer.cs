@@ -192,7 +192,7 @@ namespace Dan200.Launcher.Main
             return null;
         }
 
-        public static bool ExtractEmbeddedGame( ProgressDelegate listener )
+        public static bool ExtractEmbeddedGame( ProgressDelegate listener, ICancellable cancelObject )
         {
             string gameTitle, gameVersion, gameURL;
             if( GetEmbeddedGameInfo( out gameTitle, out gameVersion, out gameURL ) && gameVersion != null )
@@ -204,22 +204,44 @@ namespace Dan200.Launcher.Main
                     var stream = assembly.GetManifestResourceStream( "EmbeddedGame.zip" );
                     if( stream != null )
                     {
-                        // Delete old download
-                        if( File.Exists( downloadPath ) )
+                        using( stream )
                         {
-                            File.Delete( downloadPath );
-                        }
-
-                        // Create new download
-                        using( var progressStream = new ProgressStream( stream, listener ) )
-                        {
-                            Directory.CreateDirectory( Path.GetDirectoryName( downloadPath ) );
-                            using( var output = File.OpenWrite( downloadPath ) )
+                            try
                             {
-                                progressStream.CopyTo( output );
-                                output.Close();
+                                using( var progressStream = new ProgressStream( stream, listener, cancelObject ) )
+                                {
+                                    // Delete old download
+                                    if( File.Exists( downloadPath ) )
+                                    {
+                                        File.Delete( downloadPath );
+                                    }
+
+                                    // Create new download
+                                    try
+                                    {
+                                        Directory.CreateDirectory( Path.GetDirectoryName( downloadPath ) );
+                                        using( var output = File.OpenWrite( downloadPath ) )
+                                        {
+                                            try
+                                            {
+                                                progressStream.CopyTo( output );
+                                            }
+                                            finally
+                                            {
+                                                output.Close();
+                                            }
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        progressStream.Close();
+                                    }
+                                }
                             }
-                            progressStream.Close();
+                            finally
+                            {
+                                stream.Close();
+                            }
                         }
                         return true;
                     }
@@ -237,7 +259,7 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool DownloadGame( string gameTitle, string gameVersion, string url, ProgressDelegate listener )
+        public static bool DownloadGame( string gameTitle, string gameVersion, string url, ProgressDelegate listener, ICancellable cancelObject )
         {
             if( url == null )
             {
@@ -251,22 +273,34 @@ namespace Dan200.Launcher.Main
                 request.Timeout = 10000;
                 using( var response = request.GetResponse() )
                 {
-                    using( var stream = new ProgressStream( response.GetResponseStream(), listener ) )
+                    using( var stream = new ProgressStream( response.GetResponseStream(), listener, cancelObject ) )
                     {
-                        // Delete old download
-                        if( File.Exists( downloadPath ) )
+                        try
                         {
-                            File.Delete( downloadPath );
-                        }
+                            // Delete old download
+                            if( File.Exists( downloadPath ) )
+                            {
+                                File.Delete( downloadPath );
+                            }
 
-                        // Create new download
-                        Directory.CreateDirectory( Path.GetDirectoryName( downloadPath ) );
-                        using( var output = File.OpenWrite( downloadPath ) )
-                        {
-                            stream.CopyTo( output );
-                            output.Close();
+                            // Create new download
+                            Directory.CreateDirectory( Path.GetDirectoryName( downloadPath ) );
+                            using( var output = File.OpenWrite( downloadPath ) )
+                            {
+                                try
+                                {
+                                    stream.CopyTo( output );
+                                }
+                                finally
+                                {
+                                    output.Close();
+                                }
+                            }
                         }
-                        stream.Close();
+                        finally
+                        {
+                            stream.Close();
+                        }
                     }
                 }
                 return true;
@@ -302,7 +336,7 @@ namespace Dan200.Launcher.Main
             return Directory.GetDirectories( gamesPath ).Select( p => Path.GetFileName(p) ).ToArray();
         }
 
-        public static bool InstallGame( string gameTitle, string gameVersion, ProgressDelegate listener )
+        public static bool InstallGame( string gameTitle, string gameVersion, ProgressDelegate listener, ICancellable cancelObject )
         {
             var downloadPath = GetDownloadPath( gameTitle, gameVersion );
             var installPath = GetInstallPath( gameTitle, gameVersion );
@@ -337,13 +371,31 @@ namespace Dan200.Launcher.Main
                                 Directory.CreateDirectory( Path.GetDirectoryName( entryInstallPath ) );
                                 using( var file = File.OpenWrite( entryInstallPath ) )
                                 {
-                                    using( var reader = entry.OpenReader() )
+                                    try
                                     {
-                                        reader.CopyTo( file );
-                                        reader.Close();
+                                        using( var reader = entry.OpenReader() )
+                                        {
+                                            try
+                                            {
+                                                reader.CopyTo( file );
+                                            }
+                                            finally
+                                            {
+                                                reader.Close();
+                                            }
+                                        }
                                     }
-                                    file.Close();
+                                    finally
+                                    {
+                                        file.Close();
+                                    }
                                 }
+                            }
+
+                            // Check for cancellation
+                            if( cancelObject.Cancelled )
+                            {
+                                throw new IOCancelledException();
                             }
 
                             // Notify the progress listener

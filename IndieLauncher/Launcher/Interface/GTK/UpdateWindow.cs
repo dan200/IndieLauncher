@@ -68,6 +68,10 @@ namespace Dan200.Launcher.Interface.GTK
                 int response = dialog.Run();
                 dialog.Destroy();
 
+                if( response == (int)ResponseType.Close || response == (int)ResponseType.DeleteEvent )
+                {
+                    m_updater.Cancel();
+                }
                 m_updater.AnswerPrompt( response == (int)ResponseType.Yes );
             } );
         }

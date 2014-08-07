@@ -60,8 +60,9 @@
     <Compile Include="Launcher\Main\GameUpdatePrompt.cs" />
     <Compile Include="Launcher\Main\GameUpdater.cs" />
     <Compile Include="Launcher\Main\GameLauncher.cs" />
-    <Compile Include="Launcher\Main\ICancellable.cs" />
     <Compile Include="Launcher\Interface\GTK\GameListWindow.cs" />
+    <Compile Include="Launcher\Util\ICancellable.cs" />
+    <Compile Include="Launcher\Util\IOCancelledException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
