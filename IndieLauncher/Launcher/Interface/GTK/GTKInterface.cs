@@ -17,7 +17,7 @@ namespace Dan200.Launcher.Interface.GTK
             if( Installer.GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
             {
                 // Run game from embedded game info
-                gameTitle = null;//embeddedGameTitle;
+                gameTitle = embeddedGameTitle;
                 gameVersion = Program.Arguments.GetString( "version" );
                 updateURL = embeddedGameURL;
             }
