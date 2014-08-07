@@ -5,13 +5,6 @@ Indie Launcher is a customisable, unobtrusive Launcher application that you can 
 
 There's no system tray apps, background processes or login screens, just an small process that checks for updates to your game, downloads them, then launches your game and gets out of the way.
 
-Screenshots
-===========
-
-![Screenshot 1](Screenshots/Screenshot1.png)
-![Screenshot 2](Screenshots/Screenshot2.png)
-![Screenshot 3](Screenshots/Screenshot3.png)
-
 Creating a Launcher for your game
 =================================
 
@@ -24,3 +17,10 @@ The code in this repository provides a launcher that downloads the example game 
 3. Optionally, you can embed a version of the game within the launcher itself, so that users without an active internet connection will always have something to play when they first run your launcher. Overwite [IndieLauncher/EmbeddedGame.zip](https://github.com/dan200/IndieLauncher/blob/master/IndieLauncher/EmbeddedGame.zip) with this file, and set the "version" field in EmbeddedGame.txt with the version of the game it represents. If you skip this step, remove this line and delete EmbeddedGame.zip.
 
 4. Customise the Assembly Name and Icon to whatever you want your users to see, and build the soluton. The resultant .exe is standalone, and will update and run your game when it gets launched. Distribute it to your players however you like, and they'll always be up-to-date when you publish new versions of your game!
+
+Screenshots
+===========
+
+![Screenshot 1](Screenshots/Screenshot1.png)
+![Screenshot 2](Screenshots/Screenshot2.png)
+![Screenshot 3](Screenshots/Screenshot3.png)
