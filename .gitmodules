@@ -1,0 +1,3 @@
+[submodule "LanguageExport"]
+	path = LanguageExport
+	url = https://github.com/dan200/LanguageExport
