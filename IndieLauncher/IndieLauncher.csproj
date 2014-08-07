@@ -40,6 +40,8 @@
     <Reference Include="atk-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="glib-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
     <Reference Include="glade-sharp, Version=2.12.0.0, Culture=neutral, PublicKeyToken=35e10195dab3c99f" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -63,6 +65,8 @@
     <Compile Include="Launcher\Interface\GTK\GameListWindow.cs" />
     <Compile Include="Launcher\Util\ICancellable.cs" />
     <Compile Include="Launcher\Util\IOCancelledException.cs" />
+    <Compile Include="Launcher\Interface\WinForms\WinFormsInterface.cs" />
+    <Compile Include="Launcher\Interface\WinForms\UpdateForm.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -73,6 +77,7 @@
     <Folder Include="Resources\" />
     <Folder Include="Launcher\Interface\" />
     <Folder Include="Launcher\Interface\GTK\" />
+    <Folder Include="Launcher\Interface\WinForms\" />
   </ItemGroup>
   <ProjectExtensions>
     <MonoDevelop>

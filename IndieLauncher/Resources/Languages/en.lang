@@ -4,6 +4,7 @@ meta.native_language_name=English
 meta.translator_name=Daniel Ratcliffe
 meta.translator_twitter=@DanTwoHundred
 meta.parent_language=debug
+window.title={0} Launcher
 status.checking=Checking for Updates
 status.extracting=Extracting Update
 status.downloading=Downloading Update

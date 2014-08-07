@@ -11,9 +11,9 @@ namespace Dan200.Launcher.Interface.GTK
         private GameUpdater m_updater;
         private ProgressBar m_progressBar;
 
-        public UpdateWindow( string gameTitle, string optionalGameVersion, string updateURL ) : base( WindowType.Toplevel )
+        public UpdateWindow( string gameTitle, string optionalGameVersion, string optionalUpdateURL ) : base( WindowType.Toplevel )
         {
-            m_updater = new GameUpdater( gameTitle, optionalGameVersion, updateURL );
+            m_updater = new GameUpdater( gameTitle, optionalGameVersion, optionalUpdateURL );
             m_updater.StageChanged += OnStageChanged;
             m_updater.ProgressChanged += OnProgressChanged;
             m_updater.PromptChanged += OnPromptChanged;

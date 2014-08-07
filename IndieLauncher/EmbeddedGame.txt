@@ -2,7 +2,7 @@
 // Field explanations:
 // game: Required. The name of the game to launch, this should not contain spaces.
 // version: Optional. The version of the game embedded as EmbeddedGame.zip, omit this if no game is embedded.
-// url: Optional. The URL of the feed to check for updates, omit this if you've embedded a game and don't want to provide updates.
+// url: Optional. The URL of the feed to check for updates, omit this if you've embedded a game and don't want to provide updates to it.
 game=ExampleGame 
 version=1.0
 url=https://raw.githubusercontent.com/dan200/IndieLauncherExampleGame/master/ExampleGame.xml

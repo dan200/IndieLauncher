@@ -9,6 +9,7 @@ using Dan200.Launcher.Util;
 using System.Reflection;
 using System.Globalization;
 using Dan200.Launcher.Interface.GTK;
+using Dan200.Launcher.Interface.WinForms;
 
 namespace Dan200.Launcher.Main
 {
@@ -115,7 +116,14 @@ namespace Dan200.Launcher.Main
             Language = DetermineLanguage();
 
             // Run UI
-            GTKInterface.Run();
+            if( Platform == Platform.Windows )
+            {
+                WinFormsInterface.Run();
+            }
+            else
+            {
+                GTKInterface.Run();
+            }
         }
 	}
 }
