@@ -67,8 +67,8 @@ namespace Dan200.Launcher.Util
             m_innerStream = innerStream;
             m_listener = listener;
             m_cancelObject = cancelObject;
-            m_length = lengthHint;
 
+            m_length = lengthHint;
             m_position = 0;
             m_lastProgress = -1;
             EmitProgress();
@@ -139,7 +139,7 @@ namespace Dan200.Launcher.Util
 
             if( length > 0 )
             {
-                int percentage = Math.Min( (int)((m_position * 100) / Length), 100 );
+                int percentage = Math.Min( (int)((m_position * 100) / length), 100 );
                 if( percentage != m_lastProgress )
                 {
                     m_listener.Invoke( percentage );
