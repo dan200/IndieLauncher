@@ -45,13 +45,15 @@ namespace Dan200.Launcher.Main
                         m_progress = 0.0f;
                     }
 
-                    if( StageChanged != null )
+                    var stageChanged = StageChanged;
+                    if( stageChanged != null )
                     {
-                        StageChanged.Invoke( this, EventArgs.Empty );
+                        stageChanged.Invoke( this, EventArgs.Empty );
                     }
-                    if( ProgressChanged != null )
+                    var progressChanged = ProgressChanged;
+                    if( progressChanged != null )
                     {
-                        ProgressChanged.Invoke( this, EventArgs.Empty );
+                        progressChanged.Invoke( this, EventArgs.Empty );
                     }
                 }
             }
@@ -71,9 +73,10 @@ namespace Dan200.Launcher.Main
                 lock( this )
                 {
                     m_progress = value;
-                    if( ProgressChanged != null )
+                    var progressChanged = ProgressChanged;
+                    if( progressChanged != null )
                     {
-                        ProgressChanged.Invoke( this, EventArgs.Empty );
+                        progressChanged.Invoke( this, EventArgs.Empty );
                     }
                 }
             }
@@ -144,9 +147,10 @@ namespace Dan200.Launcher.Main
             {
                 m_currentPrompt = prompt;
                 m_promptResponse = false;
-                if( PromptChanged != null )
+                var promptChanged = PromptChanged;
+                if( promptChanged != null )
                 {
-                    PromptChanged.Invoke( this, EventArgs.Empty );
+                    promptChanged.Invoke( this, EventArgs.Empty );
                 }
             }
             m_promptWaitHandle.WaitOne();
@@ -220,15 +224,12 @@ namespace Dan200.Launcher.Main
                 {
                     return false;
                 }
-                if( Install( gameVersion ) )
-                {
-                    Installer.RecordLatestInstalledVersion( m_gameTitle, gameVersion, isLatest );
-                }
-                else
+                if( !Install( gameVersion ) )
                 {
                     return false;
                 }
             }
+            Installer.RecordLatestInstalledVersion( m_gameTitle, gameVersion, isLatest );
             return true;
         }
     
@@ -241,15 +242,12 @@ namespace Dan200.Launcher.Main
                 {
                     return false;
                 }
-                if( Install( embeddedGameVersion ) )
-                {
-                    Installer.RecordLatestInstalledVersion( m_gameTitle, embeddedGameVersion, false );
-                }
-                else
+                if( !Install( embeddedGameVersion ) )
                 {
                     return false;
                 }
             }
+            Installer.RecordLatestInstalledVersion( m_gameTitle, embeddedGameVersion, false );
             return true;
         }
 
@@ -380,7 +378,7 @@ namespace Dan200.Launcher.Main
                     {
                         // A specific version has been requested
                         // Try to locate it:
-                        if( !Installer.IsGameInstalled( m_gameTitle, m_optionalGameVersion ) )
+                        if( Installer.IsGameInstalled( m_gameTitle, m_optionalGameVersion ) )
                         {
                             if( m_optionalGameVersion == embeddedGameVersion )
                             {
@@ -449,6 +447,7 @@ namespace Dan200.Launcher.Main
                             {
                                 // If we already have it, there's nothing to do
                                 launchVersion = latestVersion;
+                                Installer.RecordLatestInstalledVersion( m_gameTitle, latestVersion, true );
                             }
                             else
                             {
