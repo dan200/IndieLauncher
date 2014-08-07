@@ -102,9 +102,12 @@ namespace Dan200.Launcher.Main
         public static Language DetermineLanguage()
         {
             Dan200.Launcher.Util.Language.LoadAll();
-            return Dan200.Launcher.Util.Language.GetMostSimilarTo(
-                CultureInfo.CurrentUICulture.Name.Replace( '-', '_' )
-            );
+            string targetLanguage = Arguments.GetString( "lang" );
+            if( targetLanguage == null )
+            {
+                targetLanguage = CultureInfo.CurrentUICulture.Name.Replace( '-', '_' );
+            }
+            return Dan200.Launcher.Util.Language.GetMostSimilarTo( targetLanguage );
         }
 
 		public static void Main( string[] args )
