@@ -1,4 +1,4 @@
-// en Translations
+// en translations
 meta.english_language_name=English
 meta.native_language_name=English
 meta.translator_name=Daniel Ratcliffe
@@ -15,3 +15,5 @@ status.failed=Update Failed
 status.unknown=Please Wait
 prompt.download_new_version=A new version of {0} is available, would you like to download it?
 prompt.launch_old_version={0} failed to update, would you like to run the previous version?
+button.yes=Yes
+button.no=No
