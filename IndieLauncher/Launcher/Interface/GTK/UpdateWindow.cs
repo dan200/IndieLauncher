@@ -58,6 +58,14 @@ namespace Dan200.Launcher.Interface.GTK
             var description = m_updater.GameDescription;
             Application.Invoke( delegate
             {
+                if( prompt == GameUpdatePrompt.UsernamePassword ||
+                    prompt == GameUpdatePrompt.Password )
+                {
+                    // These prompts are not yet implemented
+                    m_updater.AnswerPrompt( false );
+                    return;
+                }
+
                 // Show message dialog
                 var dialog = new MessageDialog(
                     this,

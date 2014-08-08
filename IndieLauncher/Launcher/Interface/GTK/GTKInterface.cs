@@ -13,8 +13,8 @@ namespace Dan200.Launcher.Interface.GTK
 
             // Determine which game and which version to run
             string gameTitle, gameVersion, updateURL;
-            string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
-            if( Installer.GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
+            string embeddedGameTitle, embeddedGameVersion, embeddedGameURL, embeddedUsername, embeddedPassword;
+            if( Installer.GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL, out embeddedUsername, out embeddedPassword ) )
             {
                 // Run game from embedded game info
                 gameTitle = embeddedGameTitle;

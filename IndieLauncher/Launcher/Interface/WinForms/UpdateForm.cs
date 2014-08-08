@@ -70,12 +70,21 @@ namespace Dan200.Launcher.Interface.WinForms
             var description = m_updater.GameDescription;
             this.BeginInvoke( (Action)delegate
             {
+                if( prompt == GameUpdatePrompt.UsernamePassword ||
+                    prompt == GameUpdatePrompt.Password )
+                {
+                    // These prompts are not yet implemented
+                    m_updater.AnswerPrompt( false );
+                    return;
+                }
+
                 // Show the messagebox
                 var result = MessageBox.Show(
                     this,
                     prompt.GetQuestion( Program.Language, description ),
                     Program.Language.Translate( "window.title", description ),
-                    MessageBoxButtons.YesNoCancel,
+                    //MessageBoxButtons.YesNoCancel,
+                    MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question
                 );
 

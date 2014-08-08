@@ -19,6 +19,8 @@ namespace Dan200.Launcher.Main
 
         private GameUpdatePrompt m_currentPrompt;
         private bool m_promptResponse;
+        private string m_promptUsername;
+        private string m_promptPassword;
         private AutoResetEvent m_promptWaitHandle;
 
         public GameUpdateStage Stage
@@ -148,6 +150,8 @@ namespace Dan200.Launcher.Main
             {
                 m_currentPrompt = prompt;
                 m_promptResponse = false;
+                m_promptUsername = null;
+                m_promptPassword = null;
                 var promptChanged = PromptChanged;
                 if( promptChanged != null )
                 {
@@ -156,6 +160,27 @@ namespace Dan200.Launcher.Main
             }
             m_promptWaitHandle.WaitOne();
             return m_promptResponse;
+        }
+
+        private bool ShowUsernamePasswordPrompt( ref string o_username, ref string o_password )
+        {
+            if( ShowPrompt( GameUpdatePrompt.UsernamePassword ) )
+            {
+                o_username = m_promptUsername;
+                o_password = m_promptPassword;
+                return true;
+            }
+            return false;
+        }
+
+        private bool ShowPasswordPrompt( ref string o_password )
+        {
+            if( ShowPrompt( GameUpdatePrompt.Password ) )
+            {
+                o_password = m_promptPassword;
+                return true;
+            }
+            return false;
         }
 
         private bool Extract()
@@ -179,15 +204,59 @@ namespace Dan200.Launcher.Main
             return true;
         }
 
-        private bool Download( string gameVersion, string downloadURL )
+        private bool Download( string gameVersion, string downloadURL, string username=null, string password=null )
         {
             if( !Installer.IsGameDownloaded( m_gameTitle, gameVersion ) )
             {
                 Stage = GameUpdateStage.DownloadingUpdate;
-                if( !Installer.DownloadGame( m_gameTitle, gameVersion, downloadURL, delegate( int progress ) {
-                    StageProgress = (double)progress / 100.0;
-                }, this ) )
+
+                string embeddedGameTitle, embeddedGameVersion, embeddedGameURL, embeddedUsername, embeddedPassword;
+                if( Installer.GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL, out embeddedUsername, out embeddedPassword ) )
                 {
+                    if( username == null )
+                    {
+                        username = embeddedUsername;
+                    }
+                    if( password == null )
+                    {
+                        password = embeddedPassword;
+                    }
+                }
+
+                bool authFailure;
+                if( !Installer.DownloadGame(
+                    m_gameTitle, gameVersion,
+                    downloadURL, 
+                    username,
+                    password,
+                    delegate( int progress ) {
+                        StageProgress = (double)progress / 100.0;
+                    },
+                    this,
+                    out authFailure
+                ) )
+                {
+                    if( Cancelled )
+                    {
+                        return false;
+                    }
+                    if( authFailure )
+                    {
+                        if( embeddedUsername == null && embeddedPassword == null )
+                        {
+                            if( ShowUsernamePasswordPrompt( ref username, ref password ) )
+                            {
+                                return Download( gameVersion, downloadURL, username, password );
+                            }
+                        }
+                        else if( embeddedPassword == null )
+                        {
+                            if( ShowPasswordPrompt( ref password ) )
+                            {
+                                return Download( gameVersion, downloadURL, embeddedUsername, password );
+                            }
+                        }
+                    }
                     return false;
                 }
                 if( Cancelled )
@@ -492,7 +561,7 @@ namespace Dan200.Launcher.Main
                                                 }
                                                 else if( !ShowPrompt( GameUpdatePrompt.LaunchOldVersion ) )
                                                 {
-                                                    Finish();
+                                                    Fail();
                                                     return;
                                                 }
                                             }
@@ -548,7 +617,7 @@ namespace Dan200.Launcher.Main
             }
         }
 
-        public void AnswerPrompt( bool response )
+        public void AnswerPrompt( bool response, string username=null, string password=null )
         {
             lock( this )
             {
@@ -556,6 +625,8 @@ namespace Dan200.Launcher.Main
                 {
                     m_currentPrompt = GameUpdatePrompt.None;
                     m_promptResponse = response;
+                    m_promptUsername = username;
+                    m_promptPassword = password;
                     m_promptWaitHandle.Set();
                 }
             }

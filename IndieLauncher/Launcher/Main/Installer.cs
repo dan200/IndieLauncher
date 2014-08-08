@@ -147,7 +147,7 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool GetEmbeddedGameInfo( out string o_gameTitle, out string o_gameVersion, out string o_gameURL )
+        public static bool GetEmbeddedGameInfo( out string o_gameTitle, out string o_gameVersion, out string o_gameURL, out string o_username, out string o_password )
         {
             try
             {
@@ -162,12 +162,16 @@ namespace Dan200.Launcher.Main
                         o_gameTitle = kvp.GetString( "game" );
                         o_gameVersion = kvp.GetString( "version" );
                         o_gameURL = kvp.GetString( "url" );
+                        o_username = kvp.GetString( "username" );
+                        o_password = kvp.GetString( "password" );
                         return true;
                     }
                 }
                 o_gameTitle = default( string );
                 o_gameVersion = default( string );
                 o_gameURL = default( string );
+                o_username = default( string );
+                o_password = default( string );
                 return false;
             }
             catch( Exception )
@@ -175,14 +179,16 @@ namespace Dan200.Launcher.Main
                 o_gameTitle = default( string );
                 o_gameVersion = default( string );
                 o_gameURL = default( string );
+                o_username = default( string );
+                o_password = default( string );
                 return false;
             }
         }
 
         public static string GetEmbeddedGameVersion( string gameTitle )
         {
-            string embeddedGameTitle, embeddedGameVersion, embeddedGameURL;
-            if( GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL ) )
+            string embeddedGameTitle, embeddedGameVersion, embeddedGameURL, embeddedUsername, embeddedPassword;
+            if( GetEmbeddedGameInfo( out embeddedGameTitle, out embeddedGameVersion, out embeddedGameURL, out embeddedUsername, out embeddedPassword ) )
             {
                 if( embeddedGameTitle == gameTitle )
                 {
@@ -194,8 +200,8 @@ namespace Dan200.Launcher.Main
 
         public static bool ExtractEmbeddedGame( ProgressDelegate listener, ICancellable cancelObject )
         {
-            string gameTitle, gameVersion, gameURL;
-            if( GetEmbeddedGameInfo( out gameTitle, out gameVersion, out gameURL ) && gameVersion != null )
+            string gameTitle, gameVersion, gameURL, username, password;
+            if( GetEmbeddedGameInfo( out gameTitle, out gameVersion, out gameURL, out username, out password ) && gameVersion != null )
             {
                 var downloadPath = GetDownloadPath( gameTitle, gameVersion );
                 try
@@ -259,10 +265,11 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool DownloadGame( string gameTitle, string gameVersion, string url, ProgressDelegate listener, ICancellable cancelObject )
+        public static bool DownloadGame( string gameTitle, string gameVersion, string url, string username, string password, ProgressDelegate listener, ICancellable cancelObject, out bool o_authFailure )
         {
             if( url == null )
             {
+                o_authFailure = false;
                 return false;
             }
 
@@ -271,6 +278,10 @@ namespace Dan200.Launcher.Main
             {
                 var request = HttpWebRequest.Create( url );
                 request.Timeout = 15000;
+                if( username != null && password != null )
+                {
+                    request.Credentials = new NetworkCredential( username, password );
+                }
                 using( var response = request.GetResponse() )
                 {
                     using( var stream = new ProgressStream( response.GetResponseStream(), response.ContentLength, listener, cancelObject ) )
@@ -303,6 +314,7 @@ namespace Dan200.Launcher.Main
                         }
                     }
                 }
+                o_authFailure = false;
                 return true;
             }
             catch( IOException )
@@ -311,13 +323,22 @@ namespace Dan200.Launcher.Main
                 {
                     File.Delete( downloadPath );
                 }
+                o_authFailure = false;
                 return false;
             }
-            catch( WebException )
+            catch( WebException e )
             {
                 if( File.Exists( downloadPath ) )
                 {
                     File.Delete( downloadPath );
+                }
+                if( ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Unauthorized )
+                {
+                    o_authFailure = true;
+                }
+                else
+                {
+                    o_authFailure = false;
                 }
                 return false;
             }

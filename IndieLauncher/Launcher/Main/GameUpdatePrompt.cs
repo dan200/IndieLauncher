@@ -8,6 +8,8 @@ namespace Dan200.Launcher.Main
         None,
         DownloadNewVersion,
         LaunchOldVersion,
+        UsernamePassword,
+        Password,
     }
 
     public static class GameUpdatePromptExtensions
@@ -17,7 +19,6 @@ namespace Dan200.Launcher.Main
             switch( prompt )
             {
                 case GameUpdatePrompt.None:
-                default:
                 {
                     return "";
                 }
@@ -28,6 +29,10 @@ namespace Dan200.Launcher.Main
                 case GameUpdatePrompt.LaunchOldVersion:
                 {
                     return lang.Translate( "prompt.launch_old_version", gameTitle );
+                }
+                default:
+                {
+                    return prompt.ToString();
                 }
             }
         }
