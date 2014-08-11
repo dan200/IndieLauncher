@@ -56,6 +56,8 @@ namespace Dan200.Launcher.Interface.GTK
         {
             var prompt = m_updater.CurrentPrompt;
             var description = m_updater.GameDescription;
+            var previousUsername = m_updater.PreviouslyEnteredUsername;
+            var previousPassword = m_updater.PreviouslyEnteredPassword;
             Application.Invoke( delegate
             {
                 if( prompt == GameUpdatePrompt.Username ||
@@ -65,8 +67,12 @@ namespace Dan200.Launcher.Interface.GTK
                     // Show credentials dialog
                     var dialog = new CredentialsDialog(
                         this,
-                        (prompt != GameUpdatePrompt.Password) ? "" : null,
-                        (prompt != GameUpdatePrompt.Username) ? "" : null
+                        (prompt != GameUpdatePrompt.Password) ?
+                            ((previousUsername != null) ? previousUsername : "") :
+                            null,
+                        (prompt != GameUpdatePrompt.Username) ?
+                            ((previousPassword != null) ? previousPassword : "") :
+                            null
                     );
                     dialog.ShowAll();
                     int response = dialog.Run();

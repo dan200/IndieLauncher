@@ -125,6 +125,28 @@ namespace Dan200.Launcher.Main
             }
         }
 
+        public string PreviouslyEnteredUsername
+        {
+            get
+            {
+                lock( this )
+                {
+                    return m_promptUsername;
+                }
+            }
+        }
+
+        public string PreviouslyEnteredPassword
+        {
+            get
+            {
+                lock( this )
+                {
+                    return m_promptPassword;
+                }
+            }
+        }
+
         public event EventHandler StageChanged;
         public event EventHandler ProgressChanged;
         public event EventHandler PromptChanged;
@@ -149,9 +171,6 @@ namespace Dan200.Launcher.Main
             lock( this )
             {
                 m_currentPrompt = prompt;
-                m_promptResponse = false;
-                m_promptUsername = null;
-                m_promptPassword = null;
                 var promptChanged = PromptChanged;
                 if( promptChanged != null )
                 {
