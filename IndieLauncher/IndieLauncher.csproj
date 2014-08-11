@@ -68,6 +68,7 @@
     <Compile Include="Launcher\Interface\WinForms\WinFormsInterface.cs" />
     <Compile Include="Launcher\Interface\WinForms\UpdateForm.cs" />
     <Compile Include="Launcher\Interface\GTK\CredentialsDialog.cs" />
+    <Compile Include="Launcher\Interface\WinForms\CredentialsForm.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

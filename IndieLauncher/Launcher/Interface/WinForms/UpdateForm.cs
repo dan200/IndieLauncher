@@ -68,36 +68,57 @@ namespace Dan200.Launcher.Interface.WinForms
         {
             var prompt = m_updater.CurrentPrompt;
             var description = m_updater.GameDescription;
+            var previousUsername = m_updater.PreviouslyEnteredUsername;
+            var previousPassword = m_updater.PreviouslyEnteredPassword;
             this.BeginInvoke( (Action)delegate
             {
                 if( prompt == GameUpdatePrompt.Username ||
                     prompt == GameUpdatePrompt.Password ||
                     prompt == GameUpdatePrompt.UsernameAndPassword )
                 {
-                    // These prompts are not yet implemented
-                    m_updater.AnswerPrompt( false );
-                    return;
-                }
+                    // Show the dialog
+                    var dialog = new CredentialsForm(
+                        (prompt != GameUpdatePrompt.Password) ?
+                            ((previousUsername != null) ? previousUsername : "") :
+                            null,
+                        (prompt != GameUpdatePrompt.Username) ?
+                            ((previousPassword != null) ? previousPassword : "") :
+                            null
+                    );
+                    var result = dialog.ShowDialog( this );
 
-                // Show the messagebox
-                var result = MessageBox.Show(
-                    this,
-                    prompt.GetQuestion( Program.Language, description ),
-                    Program.Language.Translate( "window.title", description ),
-                    //MessageBoxButtons.YesNoCancel,
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question
-                );
-
-                // Inform the updater
-                if( result == DialogResult.Cancel )
-                {
-                    m_updater.Cancel();
-                    m_updater.AnswerPrompt( false );
+                    // Inform the updater
+                    if( result == DialogResult.OK )
+                    {
+                        m_updater.AnswerPrompt( true, dialog.Username, dialog.Password );
+                    }
+                    else
+                    {
+                        m_updater.AnswerPrompt( false );
+                    }
                 }
                 else
                 {
-                    m_updater.AnswerPrompt( result == DialogResult.Yes );
+                    // Show the messagebox
+                    var result = MessageBox.Show(
+                        this,
+                        prompt.GetQuestion( Program.Language, description ),
+                        Program.Language.Translate( "window.title", description ),
+                        //MessageBoxButtons.YesNoCancel,
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question
+                    );
+
+                    // Inform the updater
+                    if( result == DialogResult.Cancel )
+                    {
+                        m_updater.Cancel();
+                        m_updater.AnswerPrompt( false );
+                    }
+                    else
+                    {
+                        m_updater.AnswerPrompt( result == DialogResult.Yes );
+                    }
                 }
             } );
         }
