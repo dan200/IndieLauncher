@@ -6,3 +6,12 @@
 game=ExampleGame 
 version=1.0
 url=https://raw.githubusercontent.com/dan200/IndieLauncherExampleGame/master/ExampleGame.xml
+
+// Authentication fields:
+// If the web server hosting the game downloads returns HTTP error 401 (Unauthorized), IndieLauncher
+// will prompt the user to enter a username and password to connect with.
+// The fields here allow you to hardcode one or both of these values, so the user will only have to enter
+// the value not specified. If both fields are specified, these will be used every time and the user will never be
+// prompted. Uncomment these fields to use them.
+//username=guest
+//password=example
