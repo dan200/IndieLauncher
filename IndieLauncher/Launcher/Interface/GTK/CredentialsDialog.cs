@@ -34,7 +34,8 @@ namespace Dan200.Launcher.Interface.GTK
         }
 
         public CredentialsDialog( Window parent, string username, string password ) : base(
-            "", parent, DialogFlags.Modal,
+            Program.Language.Translate( "prompt.credentials" ),
+            parent, DialogFlags.Modal,
             Program.Language.Translate( "button.cancel" ), ResponseType.Cancel,
             Program.Language.Translate( "button.ok" ), ResponseType.Ok )
         {

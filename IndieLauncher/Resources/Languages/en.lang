@@ -22,3 +22,4 @@ button.ok=OK
 button.cancel=Cancel
 label.username=User Name:
 label.password=Password:
+prompt.credentials=Login Required
