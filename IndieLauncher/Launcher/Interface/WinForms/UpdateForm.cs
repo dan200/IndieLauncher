@@ -67,6 +67,7 @@ namespace Dan200.Launcher.Interface.WinForms
         private void OnPromptChanged( object sender, EventArgs e )
         {
             var prompt = m_updater.CurrentPrompt;
+            var customMessage = m_updater.CustomMessage;
             var description = m_updater.GameDescription;
             var previousUsername = m_updater.PreviouslyEnteredUsername;
             var previousPassword = m_updater.PreviouslyEnteredPassword;
@@ -76,7 +77,7 @@ namespace Dan200.Launcher.Interface.WinForms
                     prompt == GameUpdatePrompt.Password ||
                     prompt == GameUpdatePrompt.UsernameAndPassword )
                 {
-                    // Show the dialog
+                    // Show credentials dialog
                     var dialog = new CredentialsForm(
                         (prompt != GameUpdatePrompt.Password) ?
                             ((previousUsername != null) ? previousUsername : "") :
@@ -97,14 +98,27 @@ namespace Dan200.Launcher.Interface.WinForms
                         m_updater.AnswerPrompt( false );
                     }
                 }
+                else if( prompt == GameUpdatePrompt.CustomMessage )
+                {
+                    // Show message dialog
+                    MessageBox.Show(
+                        this,
+                        customMessage,
+                        Program.Language.Translate( "window.title", description ),
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information
+                    );
+
+                    // Inform the updater
+                    m_updater.AnswerPrompt( true );
+                }
                 else
                 {
-                    // Show the messagebox
+                    // Show question dialog
                     var result = MessageBox.Show(
                         this,
                         prompt.GetQuestion( Program.Language, description ),
                         Program.Language.Translate( "window.title", description ),
-                        //MessageBoxButtons.YesNoCancel,
                         MessageBoxButtons.YesNo,
                         MessageBoxIcon.Question
                     );

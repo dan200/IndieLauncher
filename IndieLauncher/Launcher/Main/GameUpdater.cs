@@ -18,6 +18,7 @@ namespace Dan200.Launcher.Main
         private bool m_cancelled;
 
         private GameUpdatePrompt m_currentPrompt;
+        private string m_customMessage;
         private bool m_promptResponse;
         private string m_promptUsername;
         private string m_promptPassword;
@@ -92,6 +93,17 @@ namespace Dan200.Launcher.Main
                 lock( this )
                 {
                     return m_currentPrompt;
+                }
+            }
+        }
+
+        public string CustomMessage
+        {
+            get
+            {
+                lock( this )
+                {
+                    return m_customMessage;
                 }
             }
         }
@@ -212,6 +224,12 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
+        private bool ShowCustomMessagePrompt( string customMessage )
+        {
+            m_customMessage = customMessage;
+            return ShowPrompt( GameUpdatePrompt.CustomMessage );
+        }
+
         private bool Extract()
         {
             string embeddedGameVersion = Installer.GetEmbeddedGameVersion( m_gameTitle );
@@ -253,6 +271,7 @@ namespace Dan200.Launcher.Main
                 }
 
                 bool authFailure;
+                string customMessage;
                 if( !Installer.DownloadGame(
                     m_gameTitle, gameVersion,
                     downloadURL, 
@@ -262,10 +281,15 @@ namespace Dan200.Launcher.Main
                         StageProgress = (double)progress / 100.0;
                     },
                     this,
-                    out authFailure
+                    out authFailure,
+                    out customMessage
                 ) )
                 {
                     if( Cancelled )
+                    {
+                        return false;
+                    }
+                    if( customMessage != null && !ShowCustomMessagePrompt( customMessage ) )
                     {
                         return false;
                     }
@@ -296,6 +320,10 @@ namespace Dan200.Launcher.Main
                     return false;
                 }
                 if( Cancelled )
+                {
+                    return false;
+                }
+                if( customMessage != null && !ShowCustomMessagePrompt( customMessage ) )
                 {
                     return false;
                 }

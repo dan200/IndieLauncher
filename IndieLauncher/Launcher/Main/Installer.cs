@@ -265,11 +265,12 @@ namespace Dan200.Launcher.Main
             return false;
         }
 
-        public static bool DownloadGame( string gameTitle, string gameVersion, string url, string username, string password, ProgressDelegate listener, ICancellable cancelObject, out bool o_authFailure )
+        public static bool DownloadGame( string gameTitle, string gameVersion, string url, string username, string password, ProgressDelegate listener, ICancellable cancelObject, out bool o_authFailure, out string o_customMessage )
         {
             if( url == null )
             {
                 o_authFailure = false;
+                o_customMessage = null;
                 return false;
             }
 
@@ -284,6 +285,10 @@ namespace Dan200.Launcher.Main
                 }
                 using( var response = request.GetResponse() )
                 {
+                    // Read the message
+                    o_customMessage = response.Headers.Get( "X-IndieLauncher-Message" );
+
+                    // Read the content
                     using( var stream = new ProgressStream( response.GetResponseStream(), response.ContentLength, listener, cancelObject ) )
                     {
                         try
@@ -323,6 +328,7 @@ namespace Dan200.Launcher.Main
                 {
                     File.Delete( downloadPath );
                 }
+                o_customMessage = null;
                 o_authFailure = false;
                 return false;
             }
@@ -332,6 +338,7 @@ namespace Dan200.Launcher.Main
                 {
                     File.Delete( downloadPath );
                 }
+                o_customMessage = e.Response.Headers.Get( "X-IndieLauncher-Message" );
                 if( ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Unauthorized )
                 {
                     o_authFailure = true;

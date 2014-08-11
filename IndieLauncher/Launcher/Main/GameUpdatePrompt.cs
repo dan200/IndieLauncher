@@ -11,6 +11,7 @@ namespace Dan200.Launcher.Main
         Username,
         Password,
         UsernameAndPassword,
+        CustomMessage,
     }
 
     public static class GameUpdatePromptExtensions

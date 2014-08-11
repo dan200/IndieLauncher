@@ -56,6 +56,7 @@ namespace Dan200.Launcher.Interface.GTK
         {
             var prompt = m_updater.CurrentPrompt;
             var description = m_updater.GameDescription;
+            var customMessage = m_updater.CustomMessage;
             var previousUsername = m_updater.PreviouslyEnteredUsername;
             var previousPassword = m_updater.PreviouslyEnteredPassword;
             Application.Invoke( delegate
@@ -95,6 +96,24 @@ namespace Dan200.Launcher.Interface.GTK
                             password
                         );
                     }
+                }
+                else if( prompt == GameUpdatePrompt.CustomMessage )
+                {
+                    // Show message dialog
+                    Console.WriteLine( customMessage );
+                    var dialog = new MessageDialog(
+                        this,
+                        DialogFlags.Modal,
+                        MessageType.Info,
+                        ButtonsType.Ok,
+                        customMessage
+                    );
+                    dialog.ShowAll();
+                    int response = dialog.Run();
+                    dialog.Destroy();
+
+                    // Inform the updater
+                    m_updater.AnswerPrompt( true );
                 }
                 else
                 {
