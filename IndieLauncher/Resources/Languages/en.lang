@@ -18,3 +18,7 @@ prompt.download_new_version=A new version of {0} is available, would you like to
 prompt.launch_old_version={0} failed to update, would you like to run the previous version?
 button.yes=Yes
 button.no=No
+button.ok=OK
+button.cancel=Cancel
+label.username=User Name:
+label.password=Password:

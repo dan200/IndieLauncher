@@ -8,8 +8,9 @@ namespace Dan200.Launcher.Main
         None,
         DownloadNewVersion,
         LaunchOldVersion,
-        UsernamePassword,
+        Username,
         Password,
+        UsernameAndPassword,
     }
 
     public static class GameUpdatePromptExtensions
@@ -32,7 +33,7 @@ namespace Dan200.Launcher.Main
                 }
                 default:
                 {
-                    return prompt.ToString();
+                    return "";
                 }
             }
         }

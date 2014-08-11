@@ -70,6 +70,7 @@ namespace Dan200.Launcher.Main
                         startInfo.WorkingDirectory = gamePath;
                         startInfo.Arguments = Path.GetFileName( launchPath );
                         Process.Start( startInfo );
+                        return true;
                     }
                     else
                     {
@@ -77,6 +78,7 @@ namespace Dan200.Launcher.Main
                         startInfo.FileName = launchPath;
                         startInfo.WorkingDirectory = gamePath;
                         Process.Start( startInfo );
+                        return true;
                     }
                 }
                 else
@@ -85,7 +87,6 @@ namespace Dan200.Launcher.Main
                     Process.Start( gamePath );
                     return true;
                 }
-                return true;
             }
             return false;
         }

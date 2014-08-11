@@ -162,12 +162,11 @@ namespace Dan200.Launcher.Main
             return m_promptResponse;
         }
 
-        private bool ShowUsernamePasswordPrompt( ref string o_username, ref string o_password )
+        private bool ShowUsernamePrompt( ref string o_username )
         {
-            if( ShowPrompt( GameUpdatePrompt.UsernamePassword ) )
+            if( ShowPrompt( GameUpdatePrompt.Username ) )
             {
                 o_username = m_promptUsername;
-                o_password = m_promptPassword;
                 return true;
             }
             return false;
@@ -177,6 +176,17 @@ namespace Dan200.Launcher.Main
         {
             if( ShowPrompt( GameUpdatePrompt.Password ) )
             {
+                o_password = m_promptPassword;
+                return true;
+            }
+            return false;
+        }
+
+        private bool ShowUsernameAndPasswordPrompt( ref string o_username, ref string o_password )
+        {
+            if( ShowPrompt( GameUpdatePrompt.UsernameAndPassword ) )
+            {
+                o_username = m_promptUsername;
                 o_password = m_promptPassword;
                 return true;
             }
@@ -244,9 +254,16 @@ namespace Dan200.Launcher.Main
                     {
                         if( embeddedUsername == null && embeddedPassword == null )
                         {
-                            if( ShowUsernamePasswordPrompt( ref username, ref password ) )
+                            if( ShowUsernameAndPasswordPrompt( ref username, ref password ) )
                             {
                                 return Download( gameVersion, downloadURL, username, password );
+                            }
+                        }
+                        else if( embeddedUsername == null )
+                        {
+                            if( ShowUsernamePrompt( ref username ) )
+                            {
+                                return Download( gameVersion, downloadURL, username, embeddedPassword );
                             }
                         }
                         else if( embeddedPassword == null )

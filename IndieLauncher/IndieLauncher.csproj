@@ -67,6 +67,7 @@
     <Compile Include="Launcher\Util\IOCancelledException.cs" />
     <Compile Include="Launcher\Interface\WinForms\WinFormsInterface.cs" />
     <Compile Include="Launcher\Interface\WinForms\UpdateForm.cs" />
+    <Compile Include="Launcher\Interface\GTK\CredentialsDialog.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -58,36 +58,63 @@ namespace Dan200.Launcher.Interface.GTK
             var description = m_updater.GameDescription;
             Application.Invoke( delegate
             {
-                if( prompt == GameUpdatePrompt.UsernamePassword ||
-                    prompt == GameUpdatePrompt.Password )
+                if( prompt == GameUpdatePrompt.Username ||
+                    prompt == GameUpdatePrompt.Password || 
+                    prompt == GameUpdatePrompt.UsernameAndPassword )
                 {
-                    // These prompts are not yet implemented
-                    m_updater.AnswerPrompt( false );
-                    return;
-                }
+                    // Show credentials dialog
+                    var dialog = new CredentialsDialog(
+                        this,
+                        (prompt != GameUpdatePrompt.Password) ? "" : null,
+                        (prompt != GameUpdatePrompt.Username) ? "" : null
+                    );
+                    dialog.ShowAll();
+                    int response = dialog.Run();
+                    string username = dialog.Username;
+                    string password = dialog.Password;
+                    dialog.Destroy();
 
-                // Show message dialog
-                var dialog = new MessageDialog(
-                    this,
-                    DialogFlags.Modal,
-                    MessageType.Question,
-                    ButtonsType.YesNo,
-                    prompt.GetQuestion( Program.Language, description )
-                );
-                dialog.Show();
-                int response = dialog.Run();
-                dialog.Destroy();
-
-                // Inform the updater
-                if( response == (int)ResponseType.Close ||
-                    response == (int)ResponseType.DeleteEvent )
-                {
-                    m_updater.Cancel();
-                    m_updater.AnswerPrompt( false );
+                    // Inform the updater
+                    if( response == (int)ResponseType.Close ||
+                        response == (int)ResponseType.DeleteEvent )
+                    {
+                        m_updater.Cancel();
+                        m_updater.AnswerPrompt( false );
+                    }
+                    else
+                    {
+                        m_updater.AnswerPrompt(
+                            response == (int)ResponseType.Ok,
+                            username,
+                            password
+                        );
+                    }
                 }
                 else
                 {
-                    m_updater.AnswerPrompt( response == (int)ResponseType.Yes );
+                    // Show question dialog
+                    var dialog = new MessageDialog(
+                        this,
+                        DialogFlags.Modal,
+                        MessageType.Question,
+                        ButtonsType.YesNo,
+                        prompt.GetQuestion( Program.Language, description )
+                    );
+                    dialog.ShowAll();
+                    int response = dialog.Run();
+                    dialog.Destroy();
+
+                    // Inform the updater
+                    if( response == (int)ResponseType.Close ||
+                        response == (int)ResponseType.DeleteEvent )
+                    {
+                        m_updater.Cancel();
+                        m_updater.AnswerPrompt( false );
+                    }
+                    else
+                    {
+                        m_updater.AnswerPrompt( response == (int)ResponseType.Yes );
+                    }
                 }
             } );
         }
@@ -118,19 +145,10 @@ namespace Dan200.Launcher.Interface.GTK
 
             var vbox = new VBox( false, 4 );
 
-            //var label = new Label ();
-            //label.Text = "Checking for updates...";
-            //vbox.PackStart (label, false, false, 0 );
-
             m_progressBar = new ProgressBar();
             m_progressBar.Fraction = 0.0f;
             m_progressBar.Text = "0%";
             vbox.PackStart( m_progressBar, false, false, 0 );
-
-            //var button = new Button ();
-            //button.WidthRequest = 100;
-            //button.Label = "Cancel";
-            //vbox.PackStart (button, false, false, 0);
 
             this.Add( vbox );
 

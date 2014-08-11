@@ -70,8 +70,9 @@ namespace Dan200.Launcher.Interface.WinForms
             var description = m_updater.GameDescription;
             this.BeginInvoke( (Action)delegate
             {
-                if( prompt == GameUpdatePrompt.UsernamePassword ||
-                    prompt == GameUpdatePrompt.Password )
+                if( prompt == GameUpdatePrompt.Username ||
+                    prompt == GameUpdatePrompt.Password ||
+                    prompt == GameUpdatePrompt.UsernameAndPassword )
                 {
                     // These prompts are not yet implemented
                     m_updater.AnswerPrompt( false );
