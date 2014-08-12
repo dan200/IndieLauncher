@@ -421,7 +421,7 @@ namespace Dan200.Launcher.Main
                                                 {
                                                     Mono.Unix.Native.Syscall.chmod(
                                                         entryInstallPath,
-                                                        Mono.Unix.Native.FilePermissions.ALLPERMS
+                                                        Mono.Unix.Native.FilePermissions.ACCESSPERMS
                                                     );
                                                 }
                                             }
