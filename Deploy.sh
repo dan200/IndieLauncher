@@ -8,7 +8,13 @@ GAME_LONG_TITLE="Example Game"
 rm -rf Deploy
 mkdir Deploy
 mkdir Deploy/Common
-cp IndieLauncher/bin/Release/IndieLauncher.exe Deploy/Common/${GAME_TITLE}.exe
+if [ -f IndieLauncher/bin/Release/IndieLauncher.exe ]
+then
+    cp IndieLauncher/bin/Release/IndieLauncher.exe Deploy/Common/${GAME_TITLE}.exe
+else
+    echo "IndieLauncher.exe not found. Build the solution in Release mode first."
+    exit
+fi
 
 ###########
 # WINDOWS #
