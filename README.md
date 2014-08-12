@@ -30,6 +30,6 @@ Securing your Launcher
 
 If your game is free, or you don't mind people who pirate your game getting automatic updates, your work here is done. Otherwise, you can use HTTP Authentication to ensure that only users who have a valid username and/or password can download updates to your game:
 
-1. Configure your web server to return HTTP 401 Unauthorized for file downloads without a valid username and password. Most webhost frontends will have options to set this up automatically for simple username/password combinations, or you can implement your own checks. Take a look at [this example](https://github.com/dan200/IndieLauncherExampleGame/tree/master/SecureExample) for a best practice guide and how to implement this in PHP.
+1. Configure your web server to return HTTP 401 Unauthorized for file downloads without a valid username and password. This will cause the user to be prompted for these details. Most webhost frontends will have options to set this up automatically for simple username/password combinations, or you can implement your own checks. Take a look at [this example](https://github.com/dan200/IndieLauncherExampleGame/tree/master/SecureExample) for a best practice guide and an example implementation in PHP.
 
 2. If the username or password is the same for all your users, you can customise the "username" or "password" fields in EmbeddedGame.txt to save your users some typing. This allows you to have a launcher guarded by a single password or username only.
