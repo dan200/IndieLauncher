@@ -214,7 +214,7 @@ namespace Dan200.Launcher.Main
                     var stream = assembly.GetManifestResourceStream( "EmbeddedGame." + Program.Platform + ".zip" );
                     if( stream == null )
                     {
-                        stream = assembly.GetManifestResourceStream( "EmbeddedGame.zip" );
+                        stream =  assembly.GetManifestResourceStream( "EmbeddedGame.zip" );
                     }
                     if( stream != null )
                     {
@@ -416,6 +416,14 @@ namespace Dan200.Launcher.Main
                                             try
                                             {
                                                 reader.CopyTo( file );
+                                                if( Program.Platform == Platform.Linux || 
+                                                    Program.Platform == Platform.OSX )
+                                                {
+                                                    Mono.Unix.Native.Syscall.chmod(
+                                                        entryInstallPath,
+                                                        Mono.Unix.Native.FilePermissions.ALLPERMS
+                                                    );
+                                                }
                                             }
                                             finally
                                             {
