@@ -152,7 +152,11 @@ namespace Dan200.Launcher.Main
             try
             {
                 var assembly = Assembly.GetExecutingAssembly();
-                var stream = assembly.GetManifestResourceStream( "EmbeddedGame.txt" );
+                var stream = assembly.GetManifestResourceStream( "EmbeddedGame." + Program.Platform + ".txt" );
+                if( stream == null )
+                {
+                    stream = assembly.GetManifestResourceStream( "EmbeddedGame.txt" );
+                }
                 if( stream != null )
                 {
                     var kvp = new KeyValuePairs();
@@ -207,7 +211,11 @@ namespace Dan200.Launcher.Main
                 try
                 {
                     var assembly = Assembly.GetExecutingAssembly();
-                    var stream = assembly.GetManifestResourceStream( "EmbeddedGame.zip" );
+                    var stream = assembly.GetManifestResourceStream( "EmbeddedGame." + Program.Platform + ".zip" );
+                    if( stream == null )
+                    {
+                        stream = assembly.GetManifestResourceStream( "EmbeddedGame.zip" );
+                    }
                     if( stream != null )
                     {
                         using( stream )

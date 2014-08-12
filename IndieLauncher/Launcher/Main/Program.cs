@@ -89,6 +89,16 @@ namespace Dan200.Launcher.Main
                 }
             }
         }
+
+        private static void FixOSXLibraryPaths()
+        {
+            if( Platform == Platform.OSX )
+            {
+                var prevDynLoadPath = Environment.GetEnvironmentVariable( "DYLD_FALLBACK_LIBRARY_PATH" );
+                var newDynLoadPath = "/Library/Frameworks/Mono.framework/Versions/Current/lib:" + (prevDynLoadPath == null ? "" : prevDynLoadPath + ":") + "/usr/lib";
+                System.Environment.SetEnvironmentVariable( "DYLD_FALLBACK_LIBRARY_PATH", newDynLoadPath );     
+            }
+        }
                         
         private static void SetupEmbeddedAssemblies()
         {
@@ -113,8 +123,9 @@ namespace Dan200.Launcher.Main
 		public static void Main( string[] args )
         {
             // Init
-            SetupEmbeddedAssemblies();
             Platform = DeterminePlatform();
+            FixOSXLibraryPaths();
+            SetupEmbeddedAssemblies();
             Arguments = new ProgramArguments( args );
             Language = DetermineLanguage();
 
