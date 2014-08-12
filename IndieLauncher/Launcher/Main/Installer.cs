@@ -346,13 +346,21 @@ namespace Dan200.Launcher.Main
                 {
                     File.Delete( downloadPath );
                 }
-                o_customMessage = e.Response.Headers.Get( "X-IndieLauncher-Message" );
-                if( ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Unauthorized )
+                if( e.Response != null )
                 {
-                    o_authFailure = true;
+                    o_customMessage = e.Response.Headers.Get( "X-IndieLauncher-Message" );
+                    if( ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Unauthorized )
+                    {
+                        o_authFailure = true;
+                    }
+                    else
+                    {
+                        o_authFailure = false;
+                    }
                 }
                 else
                 {
+                    o_customMessage = null;
                     o_authFailure = false;
                 }
                 return false;
