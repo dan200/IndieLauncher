@@ -36,7 +36,7 @@ rm -rf Deploy/OSX
 rm -rf Deploy/${GAME_TITLE}_OSX.zip
 mkdir -p Deploy/OSX
 cd Deploy/OSX
-macpack -n "${GAME_TITLE}Launcher" -i ../../Icon.icns -m cocoa ../Common/${GAME_TITLE}.exe
+macpack -n "${GAME_TITLE}Launcher" -i ../../Icons/Icon.icns -m cocoa ../Common/${GAME_TITLE}.exe
 cat "${GAME_TITLE}Launcher.app/Contents/MacOS/${GAME_TITLE}Launcher" | head -n 9 > temp
 echo "# Make GTK# work" >> temp
 echo "export DYLD_FALLBACK_LIBRARY_PATH=\"/Library/Frameworks/Mono.framework/Versions/Current/lib:\${DYLD_FALLBACK_LIBRARY_PATH}:/usr/lib\"" >> temp
