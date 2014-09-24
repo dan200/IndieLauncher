@@ -369,7 +369,7 @@ namespace Dan200.Launcher.Main
             return true;
         }
     
-        private bool ExtractAndInstall()
+        private bool ExtractAndInstall( bool isLatest )
         {
             string embeddedGameVersion = Installer.GetEmbeddedGameVersion( m_gameTitle );
             if( !Installer.IsGameInstalled( m_gameTitle, embeddedGameVersion ) )
@@ -383,7 +383,7 @@ namespace Dan200.Launcher.Main
                     return false;
                 }
             }
-            Installer.RecordLatestInstalledVersion( m_gameTitle, embeddedGameVersion, false );
+            Installer.RecordLatestInstalledVersion( m_gameTitle, embeddedGameVersion, isLatest );
             return true;
         }
 
@@ -521,7 +521,7 @@ namespace Dan200.Launcher.Main
                                 if( m_optionalGameVersion == embeddedGameVersion )
                                 {
                                     // Try to extract it
-                                    if( !ExtractAndInstall() )
+                                    if( !ExtractAndInstall( false ) )
                                     {
                                         FailOrCancel();
                                         return;
@@ -587,6 +587,19 @@ namespace Dan200.Launcher.Main
                                     launchVersion = latestVersion;
                                     Installer.RecordLatestInstalledVersion( m_gameTitle, latestVersion, true );
                                 }
+                                else if( latestVersion == embeddedGameVersion )
+                                {
+                                    // If the latest version is the embedded version, just extract it
+                                    if( ExtractAndInstall( true ) )
+                                    {
+                                        launchVersion = embeddedGameVersion;
+                                    }
+                                    else
+                                    {
+                                        FailOrCancel();
+                                        return;
+                                    }
+                                }
                                 else
                                 {
                                     // Try to download it (with the users consent)
@@ -643,7 +656,7 @@ namespace Dan200.Launcher.Main
                                 }
                                 else if( embeddedGameVersion != null )
                                 {
-                                    if( ExtractAndInstall() )
+                                    if( ExtractAndInstall( false ) )
                                     {
                                         launchVersion = embeddedGameVersion;
                                     }
