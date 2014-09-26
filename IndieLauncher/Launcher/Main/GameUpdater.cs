@@ -421,7 +421,7 @@ namespace Dan200.Launcher.Main
             return rssFile;
         }
 
-        public bool GetSpecificDownloadURL( string updateURL, string gameVersion, out string o_downloadURL, out bool o_isNewest )
+        private bool GetSpecificDownloadURL( string updateURL, string gameVersion, out string o_downloadURL, out bool o_isNewest )
         {
             // Get the RSS file
             var rssFile = DownloadRSSFile( updateURL );
@@ -445,7 +445,7 @@ namespace Dan200.Launcher.Main
             return true;
         }
 
-        public bool GetLatestDownloadURL( string updateURL, out string o_gameVersion, out string o_downloadURL )
+        private bool GetLatestDownloadURL( string updateURL, out string o_gameVersion, out string o_downloadURL )
         {
             // Get the RSS file
             var rssFile = DownloadRSSFile( updateURL );
@@ -473,11 +473,13 @@ namespace Dan200.Launcher.Main
         private void Fail()
         {
             Stage = GameUpdateStage.Failed;
+            Logger.Log( "Update failed" );
         }
 
         private void Finish()
         {
             Stage = GameUpdateStage.Finished;
+            Logger.Log( "Update finished" );
         }
 
         private void FailOrCancel()
@@ -485,18 +487,20 @@ namespace Dan200.Launcher.Main
             if( Cancelled )
             {
                 Stage = GameUpdateStage.Cancelled;
+                Logger.Log( "Update cancelled" );
             }
             else
             {
-                Stage = GameUpdateStage.Failed;
+                Fail();
             }
         }
 
-        public bool TryCancel()
+        private bool TryCancel()
         {
             if( Cancelled )
             {
                 Stage = GameUpdateStage.Cancelled;
+                Logger.Log( "Update cancelled" );
                 return true;
             }
             return false;
@@ -581,6 +585,7 @@ namespace Dan200.Launcher.Main
                             string launchVersion = null;
                             if( latestVersion != null )
                             {
+                                Logger.Log( "Latest version is {0}", latestVersion );
                                 if( Installer.IsGameInstalled( m_gameTitle, latestVersion ) )
                                 {
                                     // If we already have it, there's nothing to do
@@ -686,8 +691,8 @@ namespace Dan200.Launcher.Main
                     }
                     catch( Exception e )
                     {
-                        Console.WriteLine( e.ToString() );
-                        Console.WriteLine( e.StackTrace );
+                        Logger.Log( "Caught exception: {0}", e.ToString() );
+                        Logger.Log( e.StackTrace );
                         Fail();
                     }
                 } );
@@ -700,6 +705,7 @@ namespace Dan200.Launcher.Main
             {
                 if( m_currentPrompt != GameUpdatePrompt.None )
                 {
+                    Logger.Log( "Prompt answered: {0} {1} {2}", response, username, password );
                     m_currentPrompt = GameUpdatePrompt.None;
                     m_promptResponse = response;
                     m_promptUsername = username;
@@ -713,6 +719,7 @@ namespace Dan200.Launcher.Main
         {
             lock( this )
             {
+                Logger.Log( "Cancelling update" );
                 m_cancelled = true;
             }
         }

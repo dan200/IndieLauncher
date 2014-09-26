@@ -10,6 +10,8 @@ namespace Dan200.Launcher.Main
         {
             if( Installer.IsGameInstalled( gameTitle, gameVersion ) )
             {
+                Logger.Log( "Determining path to game exe ({0} {1})", gameTitle, gameVersion );
+
                 // Search for a suitable exe to run
                 string gamePath = Installer.GetInstallPath( gameTitle, gameVersion );
                 string launchPath = null;
@@ -63,6 +65,7 @@ namespace Dan200.Launcher.Main
                 if( launchPath != null )
                 {
                     // Run the exe
+                    Logger.Log( "Launching {0}", launchPath );
                     if( Path.GetExtension( launchPath ) == ".sh" )
                     {
                         var startInfo = new ProcessStartInfo();
@@ -84,6 +87,7 @@ namespace Dan200.Launcher.Main
                 else
                 {
                     // If no exe was found, just open the folder
+                    Logger.Log( "Opening {0}", gamePath );
                     Process.Start( gamePath );
                     return true;
                 }

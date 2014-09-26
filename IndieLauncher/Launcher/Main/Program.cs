@@ -90,16 +90,6 @@ namespace Dan200.Launcher.Main
             }
         }
 
-        private static void FixOSXLibraryPaths()
-        {
-            if( Platform == Platform.OSX )
-            {
-                var prevDynLoadPath = Environment.GetEnvironmentVariable( "DYLD_FALLBACK_LIBRARY_PATH" );
-                var newDynLoadPath = "/Library/Frameworks/Mono.framework/Versions/Current/lib:" + (prevDynLoadPath == null ? "" : prevDynLoadPath + ":") + "/usr/lib";
-                System.Environment.SetEnvironmentVariable( "DYLD_FALLBACK_LIBRARY_PATH", newDynLoadPath );     
-            }
-        }
-                        
         private static void SetupEmbeddedAssemblies()
         {
             EmbeddedAssembly.Load( "Ionic.Zip.dll" );
@@ -123,11 +113,14 @@ namespace Dan200.Launcher.Main
 		public static void Main( string[] args )
         {
             // Init
+            Logger.Log( "IndieLauncher" );
             Platform = DeterminePlatform();
-            FixOSXLibraryPaths();
+            Logger.Log( "Platform: {0}", Platform );
+
             SetupEmbeddedAssemblies();
             Arguments = new ProgramArguments( args );
             Language = DetermineLanguage();
+            Logger.Log( "Language: {0}", Language.Code );
 
             // Determine UI to run
             string gui = Arguments.GetString( "gui" );
@@ -142,6 +135,7 @@ namespace Dan200.Launcher.Main
                     gui = "gtk";
                 }
             }
+            Logger.Log( "GUI: {0}", gui );
 
             // Run UI
             if( gui == "winforms" )
@@ -152,6 +146,9 @@ namespace Dan200.Launcher.Main
             {
                 GTKInterface.Run();
             }
+
+            // Save log
+            Logger.Save();
         }
 	}
 }

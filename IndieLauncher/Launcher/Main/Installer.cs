@@ -82,6 +82,7 @@ namespace Dan200.Launcher.Main
             versionPath = Path.Combine( versionPath, "Latest.txt" );
             if( overwrite || !File.Exists( versionPath ) )
             {
+                Logger.Log( "Recording game version {0} to Latest.txt", gameVersion );
                 File.WriteAllText( versionPath, gameVersion );
             }
             return null;
@@ -178,8 +179,9 @@ namespace Dan200.Launcher.Main
                 o_password = default( string );
                 return false;
             }
-            catch( Exception )
+            catch( Exception e )
             {
+                Logger.Log( "Caught Exception: {0}", e.ToString() );
                 o_gameTitle = default( string );
                 o_gameVersion = default( string );
                 o_gameURL = default( string );
@@ -207,6 +209,7 @@ namespace Dan200.Launcher.Main
             string gameTitle, gameVersion, gameURL, username, password;
             if( GetEmbeddedGameInfo( out gameTitle, out gameVersion, out gameURL, out username, out password ) && gameVersion != null )
             {
+                Logger.Log( "Extracting embedded game ({0} {1})", gameTitle, gameVersion );
                 var downloadPath = GetDownloadPath( gameTitle, gameVersion );
                 try
                 {
@@ -261,8 +264,9 @@ namespace Dan200.Launcher.Main
                     }
                     return false;
                 }
-                catch( IOException )
+                catch( Exception e )
                 {
+                    Logger.Log( "Caught Exception: {0}", e.ToString() );
                     if( File.Exists( downloadPath ) )
                     {
                         File.Delete( downloadPath );
@@ -283,6 +287,7 @@ namespace Dan200.Launcher.Main
             }
 
             var downloadPath = GetDownloadPath( gameTitle, gameVersion );
+            Logger.Log( "Downloading game ({0} {1}) from {2}", gameTitle, gameVersion, downloadPath );
             try
             {
                 var request = HttpWebRequest.Create( url );
@@ -295,6 +300,10 @@ namespace Dan200.Launcher.Main
                 {
                     // Read the message
                     o_customMessage = response.Headers.Get( "X-IndieLauncher-Message" );
+                    if( o_customMessage != null )
+                    {
+                        Logger.Log( "URL returned message: {0}", o_customMessage );
+                    }
 
                     // Read the content
                     using( var stream = new ProgressStream( response.GetResponseStream(), response.ContentLength, listener, cancelObject ) )
@@ -330,31 +339,36 @@ namespace Dan200.Launcher.Main
                 o_authFailure = false;
                 return true;
             }
-            catch( IOException )
+            catch( Exception e )
             {
+                Logger.Log( "Caught Exception: {0}", e.ToString() );
                 if( File.Exists( downloadPath ) )
                 {
                     File.Delete( downloadPath );
                 }
-                o_customMessage = null;
-                o_authFailure = false;
-                return false;
-            }
-            catch( WebException e )
-            {
-                if( File.Exists( downloadPath ) )
+                if( e is WebException )
                 {
-                    File.Delete( downloadPath );
-                }
-                if( e.Response != null )
-                {
-                    o_customMessage = e.Response.Headers.Get( "X-IndieLauncher-Message" );
-                    if( ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.Unauthorized )
+                    WebException we = (WebException)e;
+                    if( we.Response != null )
                     {
-                        o_authFailure = true;
+                        o_customMessage = we.Response.Headers.Get( "X-IndieLauncher-Message" );
+                        if( o_customMessage != null )
+                        {
+                            Logger.Log( "URL returned message: {0}", o_customMessage );
+                        }
+                        if( ((HttpWebResponse)we.Response).StatusCode == HttpStatusCode.Unauthorized )
+                        {
+                            o_authFailure = true;
+                            Logger.Log( "URL returned HTTP Unauthorized" );
+                        }
+                        else
+                        {
+                            o_authFailure = false;
+                        }
                     }
                     else
                     {
+                        o_customMessage = null;
                         o_authFailure = false;
                     }
                 }
@@ -386,6 +400,7 @@ namespace Dan200.Launcher.Main
             var installPath = GetInstallPath( gameTitle, gameVersion );
             if( File.Exists( downloadPath ) )
             {
+                Logger.Log( "Installing game ({0} {1})", gameTitle, gameVersion );
                 try
                 {
                     using( var zipFile = new ZipFile( downloadPath ) )
@@ -424,13 +439,21 @@ namespace Dan200.Launcher.Main
                                             try
                                             {
                                                 reader.CopyTo( file );
-                                                if( Program.Platform == Platform.Linux || 
-                                                    Program.Platform == Platform.OSX )
+                                                try
                                                 {
-                                                    Mono.Unix.Native.Syscall.chmod(
-                                                        entryInstallPath,
-                                                        Mono.Unix.Native.FilePermissions.ACCESSPERMS
-                                                    );
+                                                    if( Program.Platform == Platform.Linux || 
+                                                        Program.Platform == Platform.OSX )
+                                                    {
+                                                        Mono.Unix.Native.Syscall.chmod(
+                                                            entryInstallPath,
+                                                            Mono.Unix.Native.FilePermissions.ACCESSPERMS
+                                                        );
+                                                    }
+                                                }
+                                                catch( Exception e )
+                                                {
+                                                    Logger.Log( "Caught Exception: {0}", e.ToString() );
+                                                    Logger.Log( "Failed to set file permissions on {0}", entryInstallPath );
                                                 }
                                             }
                                             finally
@@ -464,16 +487,9 @@ namespace Dan200.Launcher.Main
                     }
                     return true;
                 }
-                catch( IOException )
+                catch( Exception e )
                 {
-                    if( Directory.Exists( installPath ) )
-                    {
-                        Directory.Delete( installPath, true );
-                    }
-                    return false;
-                }
-                catch( ZipException )
-                {
+                    Logger.Log( "Caught Exception: {0}", e.ToString() );
                     if( Directory.Exists( installPath ) )
                     {
                         Directory.Delete( installPath, true );
