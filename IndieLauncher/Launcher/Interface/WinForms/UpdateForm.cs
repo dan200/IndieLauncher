@@ -33,7 +33,7 @@ namespace Dan200.Launcher.Interface.WinForms
             this.BeginInvoke( (Action)delegate
             {
                 string status = stage.GetStatus( Program.Language );
-                Console.WriteLine( status );
+                //Logger.Log( "Status changed to: {0}", status );
                 if( stage == GameUpdateStage.Finished ||
                     stage == GameUpdateStage.Cancelled )
                 {

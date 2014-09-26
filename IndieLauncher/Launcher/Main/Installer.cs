@@ -394,6 +394,14 @@ namespace Dan200.Launcher.Main
             return Directory.GetDirectories( gamesPath ).Select( p => Path.GetFileName(p) ).ToArray();
         }
 
+        private static void MakeFileExecutable( string filePath )
+        {
+            Mono.Unix.Native.Syscall.chmod(
+                filePath,
+                Mono.Unix.Native.FilePermissions.ACCESSPERMS
+            );
+        }
+
         public static bool InstallGame( string gameTitle, string gameVersion, ProgressDelegate listener, ICancellable cancelObject )
         {
             var downloadPath = GetDownloadPath( gameTitle, gameVersion );
@@ -444,10 +452,7 @@ namespace Dan200.Launcher.Main
                                                     if( Program.Platform == Platform.Linux || 
                                                         Program.Platform == Platform.OSX )
                                                     {
-                                                        Mono.Unix.Native.Syscall.chmod(
-                                                            entryInstallPath,
-                                                            Mono.Unix.Native.FilePermissions.ACCESSPERMS
-                                                        );
+                                                        MakeFileExecutable( entryInstallPath );
                                                     }
                                                 }
                                                 catch( Exception e )

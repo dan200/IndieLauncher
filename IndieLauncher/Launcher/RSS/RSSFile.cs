@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using Dan200.Launcher.Util;
+using Dan200.Launcher.Main;
 
 namespace Dan200.Launcher.RSS
 {
@@ -16,6 +17,7 @@ namespace Dan200.Launcher.RSS
         {
             try
             {
+                Logger.Log( "Downloading RSS file from {0}", url );
                 var request = HttpWebRequest.Create( url );
                 request.Timeout = 15000;
                 using( var response = request.GetResponse() )
@@ -33,12 +35,9 @@ namespace Dan200.Launcher.RSS
                     }
                 }
             }
-            catch( IOException )
+            catch( Exception e )
             {
-                return null;
-            }
-            catch( WebException )
-            {
+                Logger.Log( "Caught exception: {0}", e.ToString() );
                 return null;
             }
         }
@@ -51,13 +50,15 @@ namespace Dan200.Launcher.RSS
         public RSSFile( Stream stream ) : this()
         {
             // Read document
+            Logger.Log( "Parsing RSS file" );
             var document = new XmlDocument();
             try
             {
                 document.Load( stream );
             }
-            catch( Exception )
+            catch( Exception e )
             {
+                Logger.Log( "Caught exception: {0}", e.ToString() );
                 return;
             }
             finally

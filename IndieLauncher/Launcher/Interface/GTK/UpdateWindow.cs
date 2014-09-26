@@ -31,7 +31,7 @@ namespace Dan200.Launcher.Interface.GTK
             Application.Invoke( delegate
             {
                 string status = stage.GetStatus( Program.Language );
-                System.Console.WriteLine( status );
+                //Logger.Log( "Status changed to: {0}", status );
                 this.Title = status;
                 if( stage == GameUpdateStage.Finished ||
                     stage == GameUpdateStage.Cancelled )
