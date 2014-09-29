@@ -25,6 +25,10 @@ namespace Dan200.Launcher.Main
                 {
                     Debug.WriteLine( text );
                 }
+                else
+                {
+                    Console.WriteLine( text );
+                }
             }
         }
 
