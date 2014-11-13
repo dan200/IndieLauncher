@@ -1,0 +1,25 @@
+// de translations
+meta.english_language_name=German
+meta.native_language_name=Deutsch
+meta.translator_name=Florian Piesche
+meta.translator_twitter=@ektoutie
+meta.parent_language=debug
+window.title={0}
+status.checking=Suche nach Updates
+status.extracting=Update wird extrahiert
+status.downloading=Update wird heruntergeladen
+status.installing=Update wird installiert
+status.launching=Starte Spiel
+status.complete=Update erfolgreich
+status.cancelled=Update abgebrochen
+status.failed=Update fehlgeschlagen
+status.unknown=Bitte warten
+prompt.download_new_version=Es ist ein Update für {0} verfügbar. Möchten Sie das Update herunterladen?
+prompt.launch_old_version=Update von {0} fehlgeschlagen - möchten Sie die alte Version starten?
+button.yes=Ja
+button.no=Nein
+button.ok=OK
+button.cancel=Abbrechen
+label.username=Benutzername:
+label.password=Passwort:
+prompt.credentials=Login erforderlich
