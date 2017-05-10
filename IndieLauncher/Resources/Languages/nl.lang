@@ -1,0 +1,25 @@
+// nl translations
+meta.english_language_name=Nederlands
+meta.native_language_name=Nederlands
+meta.translator_name=Daniel Ratcliffe
+meta.translator_twitter=@DanTwoHundred
+meta.parent_language=debug
+window.title={0} Launcher
+status.checking=Zoeken naar updates.
+status.extracting=Update aan het uitpakken
+status.downloading=Update aan het downloaden
+status.installing=Update aan het installeren
+status.launching=Spel aan het opstarten
+status.complete=Klaar met updaten
+status.cancelled=Update is geannuleerd
+status.failed=Update is niet geslaagd
+status.unknown=Wacht Alsjeblieft
+prompt.download_new_version=Een nieuwe versie van {0} is beschikbaar, wilt u het downloaden?
+prompt.launch_old_version={0} heeft gefaald in updaten, wilt u de vorige versie opstarten?
+button.yes=Ja
+button.no=Nee
+button.ok=OK
+button.cancel=Annuleren
+label.username=Gebruikersnaam:
+label.password=Wachtwoord:
+prompt.credentials=Login Verplicht
